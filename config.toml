@@ -1,0 +1,4 @@
+baseURL = 'http://example.org'
+languageCode = 'en-us'
+title = 'Cloud Custodian Policy Builder'
+theme = 'hugo-paper'
