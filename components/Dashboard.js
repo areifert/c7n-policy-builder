@@ -1,8 +1,11 @@
 import * as React from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
 import { Accordion, AccordionSummary, AccordionDetails, Badge, Box, Checkbox, Container, CssBaseline, Divider, FormGroup, FormControlLabel, Grid, IconButton,
-  Link, List, ListItemButton, ListItemText, ListSubheader, Paper, Toolbar, Typography, } from '@mui/material';
+  Link, List, ListItemButton, ListItemText, ListSubheader, Paper, Toolbar, Tooltip, Typography, } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
+
+import { stringify } from 'yaml';
 
 import MuiAppBar from '@mui/material/AppBar';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -62,10 +65,33 @@ function DashboardContent() {
     ), {})
   );
   const [expandedPanel, setExpandedPanel] = React.useState('services');
+  const [tooltipTitle, setTooltipTitle] = React.useState('Copy');
+  const [tooltipOpen, setTooltipOpen] = React.useState(false);
 
   const handlePanel = (panel) => (event, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
   };
+
+  const generateCustodianPolicy = React.useCallback(() => {
+    const selectedServiceNames = Object.keys(services).filter(s => services[s].selected);
+
+    return stringify({
+      policies: selectedServiceNames.map((service) => {
+        return {
+          name: `${service} policy`,
+          resource: service.split('.').pop(),
+          actions: Object.keys(services[service].actions).filter(v => services[service].actions[v].selected),
+          filters: Object.keys(services[service].filters).filter(v => services[service].filters[v].selected),
+        };
+      })
+    });
+  }, [services]);
+
+  const copyPolicyToClipboard = React.useCallback(() => {
+    navigator.clipboard.writeText(generateCustodianPolicy());
+
+    setTooltipTitle('Copied!');
+  }, [generateCustodianPolicy, setTooltipTitle]);
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -119,6 +145,33 @@ function DashboardContent() {
                 />
               </Grid>
 
+              <Grid item xs={6}>
+                <Paper sx={{backgroundColor: 'black'}}>
+                  <Typography sx={{width: '100%', textAlign: 'end'}}>
+                    <Tooltip
+                      open={tooltipOpen}
+                      title={tooltipTitle}
+                      onOpen={() => setTooltipOpen(true)}
+                      onClose={() => { setTooltipOpen(false); setTimeout(() => { setTooltipTitle('Copy') }, 500); }}
+                    >
+                      <IconButton onClick={copyPolicyToClipboard}>
+                        <ContentCopyOutlinedIcon sx={{ color: 'white' }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: mdTheme.palette.primary.contrastText,
+                      fontFamily: 'monospace',
+                      padding: '.5rem 1rem',
+                      whiteSpace: 'pre',
+                      wordWrap: 'break-word',
+                    }}
+                  >
+                    {generateCustodianPolicy()}
+                  </Typography>
+                </Paper>
+              </Grid>
 
 
 

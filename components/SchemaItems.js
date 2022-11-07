@@ -229,13 +229,22 @@ export function ActionsSelector(props) {
         expandIcon={<ExpandMoreIcon />}
       >
         <Typography sx={{ width: '33%', flexShrink: 0 }}>Actions</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>{Object.keys(actions).filter(a => actions[a].selected).length} selected</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <TextField
           fullWidth
           label='Filter...'
+          value={filter}
           variant='outlined'
           onChange={(e) => setFilter(e.target.value.toLowerCase())}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position='end'>
+                <ClearIcon onClick={() => { setFilter('') }} />
+              </InputAdornment>
+            )
+          }}
         />
 
         {Object.keys(actions).filter(action => actions[action].actionType === 'service' && action.split('.').pop().includes(filter)).map((value) => (
@@ -289,13 +298,22 @@ export function FiltersSelector(props) {
         expandIcon={<ExpandMoreIcon />}
       >
         <Typography sx={{ width: '33%', flexShrink: 0 }}>Filters</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>{Object.keys(filters).filter(f => filters[f].selected).length} selected</Typography>
       </AccordionSummary>
       <AccordionDetails>
         <TextField
           fullWidth
           label='Filter...'
+          value={filter}
           variant='outlined'
           onChange={(e) => setFilter(e.target.value.toLowerCase())}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position='end'>
+                <ClearIcon onClick={() => { setFilter('') }} />
+              </InputAdornment>
+            )
+          }}
         />
 
         {Object.keys(filters).filter(f => filters[f].filterType === 'service' && f.split('.').pop().includes(filter)).map((value) => (
@@ -310,7 +328,7 @@ export function FiltersSelector(props) {
           />
         ))}
         <Divider>Common Filters</Divider>
-        {Object.keys(filters).filter(f => filters[f].filterType === 'common' && filter.split('.').pop().includes(filter)).map((value) => (
+        {Object.keys(filters).filter(f => filters[f].filterType === 'common' && f.split('.').pop().includes(filter)).map((value) => (
           <Chip
             key={value}
             label={value}
