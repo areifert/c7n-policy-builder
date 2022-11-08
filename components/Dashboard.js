@@ -1,15 +1,14 @@
 import * as React from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
-import { Accordion, AccordionSummary, AccordionDetails, Badge, Box, Checkbox, Container, CssBaseline, Divider, FormGroup, FormControlLabel, Grid, IconButton,
-  Link, List, ListItemButton, ListItemText, ListSubheader, Paper, Toolbar, Tooltip, Typography, } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Badge, Button, ButtonGroup, Box, Container, CssBaseline, Grid, IconButton, Link, Paper, Toolbar, Tooltip,
+  Typography, FormGroup, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 
 import { stringify } from 'yaml';
 
 import MuiAppBar from '@mui/material/AppBar';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { allServiceNames, commonActions, commonFilters, getServiceConfig, ActionsAndFiltersSelector, ServiceSelector } from './SchemaItems';
+import { allServiceNames, ActionsAndFiltersSelector, ServiceSelector } from './SchemaItems';
 
 function Copyright(props) {
   return (
@@ -67,6 +66,7 @@ function DashboardContent() {
   const [expandedPanel, setExpandedPanel] = React.useState('services');
   const [tooltipTitle, setTooltipTitle] = React.useState('Copy');
   const [tooltipOpen, setTooltipOpen] = React.useState(false);
+  const [policyFormat, setPolicyFormat] = React.useState('yaml');
 
   const handlePanel = (panel) => (event, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
@@ -75,7 +75,7 @@ function DashboardContent() {
   const generateCustodianPolicy = React.useCallback(() => {
     const selectedServiceNames = Object.keys(services).filter(s => services[s].selected);
 
-    return stringify({
+    const policies = {
       policies: selectedServiceNames.map((service) => {
         return {
           name: `${service} policy`,
@@ -84,8 +84,10 @@ function DashboardContent() {
           filters: Object.keys(services[service].filters).filter(v => services[service].filters[v].selected),
         };
       })
-    });
-  }, [services]);
+    };
+
+    return policyFormat === 'yaml' ? stringify(policies) : JSON.stringify(policies, null, 2)
+  }, [policyFormat, services]);
 
   const copyPolicyToClipboard = React.useCallback(() => {
     navigator.clipboard.writeText(generateCustodianPolicy());
@@ -147,7 +149,12 @@ function DashboardContent() {
 
               <Grid item xs={6}>
                 <Paper sx={{backgroundColor: 'black'}}>
-                  <Typography sx={{width: '100%', textAlign: 'end'}}>
+                  <Box sx={{width: '100%', textAlign: 'end'}}>
+                    <ToggleButtonGroup exclusive color='standard' value={policyFormat} onChange={(e, newValue) => { if (newValue !== null) { setPolicyFormat(newValue) } }}>
+                      <ToggleButton value='json' color='warning' sx={{color: 'white', borderColor: 'white'}}>json</ToggleButton>
+                      <ToggleButton value='yaml' color='warning' sx={{color: 'white', borderColor: 'white'}}>yaml</ToggleButton>
+                    </ToggleButtonGroup>
+
                     <Tooltip
                       open={tooltipOpen}
                       title={tooltipTitle}
@@ -158,7 +165,7 @@ function DashboardContent() {
                         <ContentCopyOutlinedIcon sx={{ color: 'white' }} />
                       </IconButton>
                     </Tooltip>
-                  </Typography>
+                  </Box>
                   <Typography
                     sx={{
                       color: mdTheme.palette.primary.contrastText,
@@ -172,66 +179,6 @@ function DashboardContent() {
                   </Typography>
                 </Paper>
               </Grid>
-
-
-
-
-              {/* {selectedServices.map((service, index) => {
-                const serviceConfig = getServiceConfig(service);
-
-                return (
-                  <Grid item xs={12} md={6} key={index}>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        display: 'flex',
-                        flexDirection: 'column',
-                      }}
-                    >
-                      <Typography variant="overline">{service}</Typography>
-
-                      <Accordion>
-                        <AccordionSummary
-                          expandIcon={<ExpandMoreIcon />}
-                        >
-                          <Typography sx={{ width: '33%', flexShrink: 0 }}>Actions</Typography>
-                          <Typography sx={{ color: 'text.secondary' }}>0 selected</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <FormGroup>
-                            {Object.keys(serviceConfig.actions).map((action, actionIndex) => (
-                              <FormControlLabel key={actionIndex} control={<Checkbox />} label={action} />
-                            ))}
-                            <Divider>Common Actions</Divider>
-                            {commonActions.map((action, actionIndex) => (
-                              <FormControlLabel key={actionIndex} control={<Checkbox />} label={action} />
-                            ))}
-                          </FormGroup>
-                        </AccordionDetails>
-                      </Accordion>
-                      <Accordion>
-                        <AccordionSummary
-                          expandIcon={<ExpandMoreIcon />}
-                        >
-                          <Typography sx={{ width: '33%', flexShrink: 0 }}>Filters</Typography>
-                          <Typography sx={{ color: 'text.secondary' }}>0 selected</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <FormGroup>
-                            {Object.keys(serviceConfig.filters).map((filter, filterIndex) => (
-                              <FormControlLabel key={filterIndex} control={<Checkbox />} label={filter} />
-                            ))}
-                            <Divider>Common Filters</Divider>
-                            {commonFilters.map((filter, filterIndex) => (
-                              <FormControlLabel key={filterIndex} control={<Checkbox />} label={filter} />
-                            ))}
-                          </FormGroup>
-                        </AccordionDetails>
-                      </Accordion>
-                    </Paper>
-                  </Grid>
-                );
-              })} */}
             </Grid>
             <Copyright sx={{ pt: 4 }} />
           </Container>

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Checkbox, Chip, Divider, FormControlLabel, FormGroup, IconButton, InputAdornment, ListItemButton, ListItemText, ListSubheader, TextField, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Chip, Divider, InputAdornment, ListItemButton, ListItemText,
+  ListSubheader, TextField, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ClearIcon from '@mui/icons-material/Clear';
 
@@ -49,33 +50,6 @@ export function getServiceFilters(serviceName) {
     ...commonFilters,
     ...serviceFilters
   };
-}
-
-export function SchemaItems(props) {
-  const { setSelectedServices } = props;
-
-  return (
-    <React.Fragment>
-      <ListSubheader component="div" inset>
-        Available services
-      </ListSubheader>
-      {Object.keys(c7n_schema.definitions.resources).map((value, index) => (
-        <ListItemButton key={index} onClick={() => {
-          setSelectedServices((services) => {
-            if (!services.includes(value)) {
-              services.push(value);
-              services.sort();
-              return Array.from(services);
-            } else {
-              return services;
-            }
-          })
-        }}>
-          <ListItemText primary={value} />
-        </ListItemButton>
-      ))}
-    </React.Fragment>
-  )
 }
 
 export function ServiceSelector(props) {
