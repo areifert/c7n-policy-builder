@@ -84,6 +84,8 @@ if __name__ == '__main__':
         )
     )
 
-    print(json.dumps(documentation, indent=2))
-    with open('../public/c7n-docs.json', 'w') as f:
+    output_file = '../public/c7n-docs.json'
+    with open(output_file, 'w') as f:
         json.dump(documentation, f, indent=2)
+
+    print('output written to file:', output_file)
