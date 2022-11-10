@@ -8,7 +8,7 @@ import { stringify } from 'yaml';
 
 import MuiAppBar from '@mui/material/AppBar';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { allServiceNames, ActionsAndFiltersSelector, ServiceSelector } from './SchemaItems';
+import { allServiceNames, ActionsAndFiltersSelector, ServiceSelector, NewService } from './SchemaItems';
 
 function Copyright(props) {
   return (
@@ -63,37 +63,58 @@ function DashboardContent() {
       }
     ), {})
   );
+
+  const [selectedServices, setSelectedServices] = React.useState([]);
   const [expandedPanel, setExpandedPanel] = React.useState('services');
   const [tooltipTitle, setTooltipTitle] = React.useState('Copy');
   const [tooltipOpen, setTooltipOpen] = React.useState(false);
   const [policyFormat, setPolicyFormat] = React.useState('yaml');
+  const [serviceCount, setServiceCount] = React.useState(1);
 
   const handlePanel = (panel) => (event, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
   };
 
-  const generateCustodianPolicy = React.useCallback(() => {
-    const selectedServiceNames = Object.keys(services).filter(s => services[s].selected);
-
+  const generateNewCustodianPolicy = React.useCallback(() => {
     const policies = {
-      policies: selectedServiceNames.map((service) => {
+      policies: selectedServices.map((service) => {
+        const serviceName = Object.keys(service)[0];
+
         return {
-          name: `${service} policy`,
-          resource: service.split('.').pop(),
-          actions: Object.keys(services[service].actions).filter(v => services[service].actions[v].selected),
-          filters: Object.keys(services[service].filters).filter(v => services[service].filters[v].selected),
+          name: `${serviceName} policy`,
+          resource: serviceName.split('.').pop(),
+          actions: service[serviceName].actions.map(a => {
+            return a.config.properties;
+          }),
+          filters: service[serviceName].filters
         };
       })
     };
 
     return policyFormat === 'yaml' ? stringify(policies) : JSON.stringify(policies, null, 2)
-  }, [policyFormat, services]);
+  }, [policyFormat, selectedServices]);
 
   const copyPolicyToClipboard = React.useCallback(() => {
-    navigator.clipboard.writeText(generateCustodianPolicy());
+    navigator.clipboard.writeText(generateNewCustodianPolicy());
 
     setTooltipTitle('Copied!');
-  }, [generateCustodianPolicy, setTooltipTitle]);
+  }, [generateNewCustodianPolicy, setTooltipTitle]);
+
+  const setServiceAtIndex = (index, config) => {
+    setSelectedServices((existingServices) => {
+      if (config === null) {
+        existingServices.splice(index, 1);
+      } else {
+        existingServices[index] = config;
+      }
+
+      return Array.from(existingServices);
+    });
+  }
+
+  React.useEffect(() => {
+    console.log('selected services changed:', selectedServices);
+  }, [selectedServices]);
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -132,8 +153,8 @@ function DashboardContent() {
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
-              <Grid item xs={6}>
-                <ServiceSelector
+              <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
+                {/* <ServiceSelector
                   expanded={expandedPanel === 'services'}
                   onChange={handlePanel('services')}
                   services={services}
@@ -144,11 +165,24 @@ function DashboardContent() {
                   onChange={handlePanel('actionsAndFilters')}
                   services={services}
                   setServices={setServices}
-                />
+                /> */}
+                {[...Array(serviceCount).keys()].map(serviceIndex => (
+                  <Paper key={serviceIndex} sx={{padding: 3, margin: 1}}>
+                    <NewService
+                      excludeServices={["TODO"]}
+                      setSelectedService={(config) => { setServiceAtIndex(serviceIndex, config) }}
+                    />
+                  </Paper>
+                ))}
+                <Button
+                  onClick={() => setServiceCount((previous) => previous + 1)}
+                >
+                  Add another service
+                </Button>
               </Grid>
 
-              <Grid item xs={6}>
-                <Paper sx={{backgroundColor: 'black'}}>
+              <Grid item sm={6}>
+                <Paper sx={{backgroundColor: 'black', maxHeight: '80vh', overflowY: 'auto'}}>
                   <Box sx={{width: '100%', textAlign: 'end'}}>
                     <ToggleButtonGroup exclusive color='standard' value={policyFormat} onChange={(e, newValue) => { if (newValue !== null) { setPolicyFormat(newValue) } }}>
                       <ToggleButton value='json' color='warning' sx={{color: 'white', borderColor: 'white'}}>json</ToggleButton>
@@ -175,7 +209,7 @@ function DashboardContent() {
                       wordWrap: 'break-word',
                     }}
                   >
-                    {generateCustodianPolicy()}
+                    {generateNewCustodianPolicy()}
                   </Typography>
                 </Paper>
               </Grid>
