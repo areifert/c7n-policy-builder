@@ -65,8 +65,8 @@ function DashboardContent() {
         return {
           name: service[serviceName].name,
           resource: serviceName.split('.').pop(),
-          actions: service[serviceName].actions.map(v => v.values),
-          filters: service[serviceName].filters.map(v => v.values)
+          actions: service[serviceName].actions.filter(v => v !== null).map(v => v.values),
+          filters: service[serviceName].filters.filter(v => v !== null).map(v => v.values)
         };
       })
     };

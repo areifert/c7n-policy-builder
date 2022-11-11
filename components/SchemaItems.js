@@ -146,6 +146,45 @@ export function NewService(props) {
     });
   };
 
+  const setActionOrFilterAtIndex = (type, index, config) => {
+    setService((prevService) => {
+      const serviceName = Object.keys(prevService)[0];
+
+      let arrayRef;
+      if (type === 'action') {
+        arrayRef = prevService[serviceName].actions;
+      } else {
+        arrayRef = prevService[serviceName].filters;
+      }
+
+      arrayRef[index] = config;
+      return {...prevService};
+    });
+  };
+
+  const deleteActionOrFilterAtIndex = (type, index) => {
+    setService((prevService) => {
+      const serviceName = Object.keys(prevService)[0];
+
+      let arrayRef;
+      if (type === 'action') {
+        arrayRef = prevService[serviceName].actions;
+      } else {
+        arrayRef = prevService[serviceName].filters;
+      }
+
+      arrayRef[index] = null;
+      if (arrayRef.every(v => v === null)) {
+        // Reduce to one-element array
+        while (arrayRef.length > 1) {
+          arrayRef.pop();
+        }
+      }
+
+      return {...prevService};
+    });
+  };
+
   const setPolicyName = (name) => {
     setService((prevService) => {
       const serviceName = Object.keys(prevService)[0];
@@ -161,8 +200,8 @@ export function NewService(props) {
       setService({
         [newValue]: {
           name: '',
-          actions: [],
-          filters: []
+          actions: [null],
+          filters: [null]
         }
       });
     }
@@ -197,25 +236,31 @@ export function NewService(props) {
             onChange={e => setPolicyName(e.target.value.trim())}
           />
 
-          {[...Array(actionCount).keys()].map(actionIndex => (
-            <React.Fragment key={actionIndex}>
-              <Divider>Actions</Divider>
-              <NewActionOrFilter
-                type='action'
-                serviceName={Object.keys(service)[0]}
-                setSelectedActionOrFilter={(config) => { setActionAtIndex(actionIndex, config) }}
-              />
-            </React.Fragment>
-          ))}
+          {Object.keys(service).map((serviceName) => (
+            <React.Fragment key={serviceName}>
+              {service[serviceName].actions.map((v, actionIndex) => (
+                <React.Fragment key={actionIndex}>
+                  <Divider>Actions</Divider>
+                  <NewActionOrFilter
+                    type='action'
+                    deleteMe={() => deleteActionOrFilterAtIndex('action', actionIndex)}
+                    serviceName={Object.keys(service)[0]}
+                    setSelectedActionOrFilter={(config) => setActionOrFilterAtIndex('action', actionIndex, config)}
+                  />
+                </React.Fragment>
+              ))}
 
-          {[...Array(filterCount).keys()].map(filterIndex => (
-            <React.Fragment key={filterIndex}>
-              <Divider>Filters</Divider>
-              <NewActionOrFilter
-                type='filter'
-                serviceName={Object.keys(service)[0]}
-                setSelectedActionOrFilter={(config) => { setFilterAtIndex(filterIndex, config) }}
-              />
+              {service[serviceName].filters.map((v, filterIndex) => (
+                <React.Fragment key={filterIndex}>
+                  <Divider>Filters</Divider>
+                  <NewActionOrFilter
+                    type='filter'
+                    deleteMe={() => deleteActionOrFilterAtIndex('filter', filterIndex)}
+                    serviceName={Object.keys(service)[0]}
+                    setSelectedActionOrFilter={(config) => setActionOrFilterAtIndex('filter', filterIndex, config)}
+                  />
+                </React.Fragment>
+              ))}
             </React.Fragment>
           ))}
         </React.Fragment>
@@ -225,7 +270,7 @@ export function NewService(props) {
 }
 
 export function NewActionOrFilter(props) {
-  const { serviceName, setSelectedActionOrFilter, type } = props;
+  const { deleteMe, serviceName, setSelectedActionOrFilter, type } = props;
 
   const [actionOrFilter, setActionOrFilter] = React.useState(null);
 
@@ -260,15 +305,21 @@ export function NewActionOrFilter(props) {
 
   return (
     <React.Fragment>
-      <Autocomplete
-        disableClearable
-        options={type === 'action' ? getNewServiceActions(serviceName) : getNewServiceFilters(serviceName)}
-        isOptionEqualToValue={(option, value) => option.label === value.label }
-        sx={{width: '250px', margin: 1}}
-        renderInput={(params) => <TextField {...params} label={"Choose " + (type === 'action' ? "an action" : "a filter") + "..."} />}
-        onChange={(e, newValue) => setActionOrFilter(newValue)}
-        value={actionOrFilter}
-      />
+      <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between'}}>
+        <Autocomplete
+          disableClearable
+          options={type === 'action' ? getNewServiceActions(serviceName) : getNewServiceFilters(serviceName)}
+          isOptionEqualToValue={(option, value) => option.label === value.label }
+          sx={{width: '250px', margin: 1}}
+          renderInput={(params) => <TextField {...params} label={"Choose " + (type === 'action' ? "an action" : "a filter") + "..."} />}
+          onChange={(e, newValue) => setActionOrFilter(newValue)}
+          value={actionOrFilter}
+        />
+
+        <IconButton onClick={() => { setActionOrFilter(null); deleteMe(); }}>
+          <DeleteIcon />
+        </IconButton>
+      </Box>
 
       {actionOrFilter &&
         <React.Fragment>
