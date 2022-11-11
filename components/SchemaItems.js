@@ -1,7 +1,5 @@
 import * as React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, Button, Divider, Grid, Link, TextField, Typography } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CollapsibleSection from './CollapsibleSection';
+import { Autocomplete, Divider, Grid, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 import c7n_schema from '../public/c7n-schema.json';
 import c7n_docs from '../public/c7n-docs.json';
@@ -11,23 +9,6 @@ export const allServiceNames = Object.keys(c7n_schema.definitions.resources);
 
 export function getServiceConfig(serviceName) {
   return c7n_schema.definitions.resources[serviceName];
-}
-
-export function getServiceActions(serviceName) {
-  const commonActions = c7n_schema.definitions.actions;
-  Object.keys(commonActions).map((action) => {
-    commonActions[action].actionType = 'common';
-  });
-
-  const serviceActions = getServiceConfig(serviceName).actions;
-  Object.keys(serviceActions).map((action) => {
-    serviceActions[action].actionType = 'service';
-  });
-
-  return {
-    ...commonActions,
-    ...serviceActions
-  };
 }
 
 export function sortAutocompleteOptions(options) {
@@ -129,165 +110,6 @@ export function getNewServiceFilters(serviceName) {
   return filters;
 }
 
-export function getServiceFilters(serviceName) {
-  const commonFilters = c7n_schema.definitions.filters;
-  Object.keys(commonFilters).map((filter) => {
-    if (commonFilters[filter] === null) {
-      delete commonFilters[filter];
-      return;
-    }
-
-    commonFilters[filter].filterType = 'common';
-  });
-
-  const serviceFilters = getServiceConfig(serviceName).filters;
-  Object.keys(serviceFilters).map((filter) => {
-    serviceFilters[filter].filterType = 'service';
-  });
-
-  return {
-    ...commonFilters,
-    ...serviceFilters
-  };
-}
-
-export function ServiceSelector(props) {
-  const { expanded, onChange, services, setServices } = props;
-
-  const handleClick = (e) => {
-    setServices((services) => {
-      const service = e.target.textContent;
-
-      return {
-        ...services,
-        [service]: {
-          ...services[service],
-          selected: !services[service].selected
-        }
-      }
-    });
-  };
-
-  return (
-    <CollapsibleSection
-      title='Services'
-      includeCount
-      data={services}
-      onClick={handleClick}
-      expanded={expanded}
-      onChange={onChange}
-    />
-  );
-}
-
-export function ActionsAndFiltersSelector(props) {
-  const { expanded, onChange, services, setServices } = props;
-
-  const setActions = (service, action) => {
-    setServices((services) => {
-      return {
-        ...services,
-        [service]: {
-          ...services[service],
-          actions: {
-            ...services[service].actions,
-            ...action
-          }
-        }
-      }
-    });
-  };
-
-  const setFilters = (service, f) => {
-    setServices((services) => {
-      return {
-        ...services,
-        [service]: {
-          ...services[service],
-          filters: {
-            ...services[service].filters,
-            ...f
-          }
-        }
-      }
-    });
-  };
-
-  return (
-    <Accordion disabled={Object.keys(services).filter(service => services[service].selected).length === 0} expanded={expanded} onChange={onChange}>
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-      >
-        <Typography sx={{ width: '33%', flexShrink: 0 }}>Actions and Filters</Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        {Object.keys(services).filter(service => services[service].selected).map((service) => {
-          const actionData = Object.keys(services[service].actions).length > 0 ? services[service].actions : getServiceActions(service);
-          const filterData = Object.keys(services[service].filters).length > 0 ? services[service].filters : getServiceFilters(service);
-
-          return (
-            <React.Fragment key={service}>
-              <Typography variant='overline'>{service}</Typography>
-
-              <CollapsibleSection
-                title='Actions'
-                includeCount
-                data={actionData}
-                dataSegments={[
-                  {
-                    filterFunction: (a) => actionData[a].actionType === 'service'
-                  },
-                  {
-                    title: 'Common Actions',
-                    filterFunction: (a) => actionData[a].actionType === 'common'
-                  }
-                ]}
-                onClick={(e) => {
-                  const action = e.target.textContent;
-
-                  setActions(service, {
-                    ...actionData,
-                    [action]: {
-                      ...actionData[action],
-                      selected: actionData[action] ? !actionData[action].selected : true
-                    }
-                  });
-                }}
-              />
-
-              <CollapsibleSection
-                title='Filters'
-                includeCount
-                data={filterData}
-                dataSegments={[
-                  {
-                    filterFunction: (f) => filterData[f].filterType === 'service'
-                  },
-                  {
-                    title: 'Common Filters',
-                    filterFunction: (f) => filterData[f].filterType === 'common'
-                  }
-                ]}
-                onClick={(e) => {
-                  const f = e.target.textContent;
-
-                  setFilters(service, {
-                    ...filterData,
-                    [f]: {
-                      ...filterData[f],
-                      selected: filterData[f] ? !filterData[f].selected : true
-                    }
-                  });
-                }}
-              />
-            </React.Fragment>
-          );
-        })}
-      </AccordionDetails>
-    </Accordion>
-  );
-}
-
 export function NewService(props) {
   const { excludeServices, setSelectedService } = props;
 
@@ -297,17 +119,11 @@ export function NewService(props) {
 
   const setServiceAction = (action, deleteOrAdd) => {
     setService((prevService) => {
-      console.log('previous service:', prevService);
-      console.log('action:', action);
-
       const serviceName = Object.keys(prevService)[0];
 
       const actionIndex = prevService[serviceName].actions.findIndex((element) => {
-        console.log('findElement:', element);
         return element.label === action.label;
       });
-      console.log('actionIndex:', actionIndex);
-      console.log(prevService[serviceName]);
 
       if (deleteOrAdd === 'delete') {
         if (actionIndex === -1) {
@@ -331,9 +147,6 @@ export function NewService(props) {
   }
 
   const setActionAtIndex = (index, action) => {
-    console.log('index:', index);
-    console.log('action:', action);
-
     setService((prevService) => {
       const serviceName = Object.keys(prevService)[0];
 
@@ -387,12 +200,12 @@ export function NewService(props) {
             </React.Fragment>
           ))}
 
-          {[...Array(filterCount).keys()].map(filterIndex => (
+          {/* {[...Array(filterCount).keys()].map(filterIndex => (
             <React.Fragment key={filterIndex}>
               <Divider>Filters</Divider>
               <NewFilter serviceName={Object.keys(service)[0]} />
             </React.Fragment>
-          ))}
+          ))} */}
         </React.Fragment>
       }
     </React.Fragment>
@@ -413,6 +226,26 @@ export function NewAction(props) {
   React.useEffect(() => {
     setSelectedAction(action);
   }, [action]);
+
+  const setProperty = (property, value) => {
+    setAction((prevAction) => {
+      if (!prevAction.values) {
+        prevAction.values = {};
+      }
+
+      if (value === null || value.length === 0) {
+        if (property in prevAction.values) {
+          delete prevAction.values[property];
+        } else {
+          return prevAction;
+        }
+      } else {
+        prevAction.values[property] = value;
+      }
+
+      return {...prevAction};
+    });
+  };
 
   return (
     <React.Fragment>
@@ -442,20 +275,42 @@ export function NewAction(props) {
             </React.Fragment>
           }
 
-          <Typography variant='overline'>Parameters</Typography>
-          <Grid container>
-            {Object.keys(action.config.properties).map((param) => (
-              <NewParameter
-                key={param}
-                name={param}
-                config={action.config.properties[param]}
-                isRequired={action.config.required && action.config.required.includes(param)}
-              />
-            ))}
-          </Grid>
+          <PropertiesTable
+            properties={action.config.properties}
+            requiredProperties={action.config.required}
+            setProperty={setProperty}
+          />
         </React.Fragment>
       }
     </React.Fragment>
+  );
+}
+
+export function PropertiesTable(props) {
+  const { properties, requiredProperties, setProperty } = props;
+
+  return (
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Property</TableCell>
+            <TableCell>Value</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Object.keys(properties).map((property) => (
+            <NewParameter
+              key={property}
+              name={property}
+              config={properties[property]}
+              isRequired={requiredProperties && requiredProperties.includes(property)}
+              setProperty={setProperty}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -516,26 +371,24 @@ export function NewFilter(props) {
 }
 
 export function NewParameter(props) {
-  const { name, config, isRequired } = props;
+  const { name, config, isRequired, setProperty } = props;
 
   return (
-    <React.Fragment>
-      <Grid item xs={4}>
-        <Typography gutterBottom sx={{fontFamily: 'monospace'}}>{name}{isRequired ? ' *' : ''}</Typography>
-      </Grid>
-      <Grid item xs={4}>
-        <Typography sx={{fontFamily: 'monospace'}}>=</Typography>
-      </Grid>
-      <Grid item xs={4}>
-        <ParameterInput config={config} isRequired={isRequired} />
-        {/* <Typography>{config.type ? config.type : (config.enum ? 'enum' : 'unknown')}</Typography> */}
-      </Grid>
-    </React.Fragment>
+    <TableRow>
+      <TableCell sx={{fontFamily: 'monospace'}}>{name}{isRequired ? ' *' : ''}</TableCell>
+      <TableCell>
+        <ParameterInput
+          config={config}
+          isRequired={isRequired}
+          setProperty={(value) => setProperty(name, value)}
+        />
+      </TableCell>
+    </TableRow>
   );
 }
 
 export function ParameterInput(props) {
-  const { config, isRequired } = props;
+  const { config, isRequired, setProperty } = props;
 
   const [inputElement, setInputElement] = React.useState(null);
   const [value, setValue] = React.useState(null);
@@ -640,21 +493,28 @@ export function ParameterInput(props) {
       }
     } else if (config.enum) {
       if (config.enum.length === 1) {
+        setInputElement(<Typography>{config.enum[0]}</Typography>);
+        setValue(config.enum[0]);
+      } else {
         setInputElement(
-          <TextField
-            disabled
+          <Autocomplete
             fullWidth
             required={isRequired}
-            value={config.enum[0]}
+            options={config.enum}
+            renderInput={(params) => <TextField {...params} label="Choose one..." />}
+            onChange={(e, newValue) => setValue(newValue)}
           />
         );
-      } else {
       }
 
     } else if (config.oneOf) {
       // TODO
     }
   }, [config, isRequired, value, setValue, setInputElement]);
+
+  React.useEffect(() => {
+    setProperty(value);
+  }, [value]);
 
   return inputElement;
 }

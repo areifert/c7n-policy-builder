@@ -8,7 +8,7 @@ import { stringify } from 'yaml';
 
 import MuiAppBar from '@mui/material/AppBar';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { allServiceNames, ActionsAndFiltersSelector, ServiceSelector, NewService } from './SchemaItems';
+import { allServiceNames, NewService } from './SchemaItems';
 
 function Copyright(props) {
   return (
@@ -83,9 +83,9 @@ function DashboardContent() {
         return {
           name: `${serviceName} policy`,
           resource: serviceName.split('.').pop(),
-          actions: service[serviceName].actions.map(a => {
-            return a.config.properties;
-          }),
+          actions: service[serviceName].actions.map(a => a.values),
+            // return a.config.properties;
+          // }),
           filters: service[serviceName].filters
         };
       })
@@ -154,18 +154,6 @@ function DashboardContent() {
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
-                {/* <ServiceSelector
-                  expanded={expandedPanel === 'services'}
-                  onChange={handlePanel('services')}
-                  services={services}
-                  setServices={setServices}
-                />
-                <ActionsAndFiltersSelector
-                  expanded={expandedPanel === 'actionsAndFilters'}
-                  onChange={handlePanel('actionsAndFilters')}
-                  services={services}
-                  setServices={setServices}
-                /> */}
                 {[...Array(serviceCount).keys()].map(serviceIndex => (
                   <Paper key={serviceIndex} sx={{padding: 3, margin: 1}}>
                     <NewService
