@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Autocomplete, Divider, Grid, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Divider, Grid, IconButton, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import c7n_schema from '../public/c7n-schema.json';
 import c7n_docs from '../public/c7n-docs.json';
@@ -111,7 +112,7 @@ export function getNewServiceFilters(serviceName) {
 }
 
 export function NewService(props) {
-  const { excludeServices, setSelectedService } = props;
+  const { deleteMe, excludeServices, setSelectedService } = props;
 
   const [service, setService] = React.useState(null);
   const [actionCount, setActionCount] = React.useState(1);
@@ -145,18 +146,27 @@ export function NewService(props) {
     });
   };
 
+  const setPolicyName = (name) => {
+    setService((prevService) => {
+      const serviceName = Object.keys(prevService)[0];
+      prevService[serviceName].name = name;
+      return {...prevService};
+    });
+  };
+
   const onServiceNameChange = (e, newValue) => {
     if (newValue === null) {
       setService(null);
     } else {
       setService({
         [newValue]: {
+          name: '',
           actions: [],
           filters: []
         }
       });
     }
-  }
+  };
 
   React.useEffect(() => {
     setSelectedService(service);
@@ -164,16 +174,28 @@ export function NewService(props) {
 
   return (
     <React.Fragment>
-      <Autocomplete
-        disableClearable
-        options={allServiceNames}
-        sx={{width: '250px', margin: 1}}
-        renderInput={(params) => <TextField {...params} label="Choose a service..." />}
-        onChange={onServiceNameChange}
-      />
+      <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between'}}>
+        <Autocomplete
+          disableClearable
+          options={allServiceNames.filter(v => !excludeServices.includes(v))}
+          sx={{width: '250px', margin: 1}}
+          renderInput={(params) => <TextField {...params} label="Choose a service..." />}
+          onChange={onServiceNameChange}
+        />
+
+        <IconButton onClick={deleteMe}>
+          <DeleteIcon />
+        </IconButton>
+      </Box>
 
       {service &&
         <React.Fragment>
+          <TextField
+            label='Policy name'
+            sx={{width: '325px', mt: 3, mb: 3, ml: 1, mr: 1}}
+            onChange={e => setPolicyName(e.target.value.trim())}
+          />
+
           {[...Array(actionCount).keys()].map(actionIndex => (
             <React.Fragment key={actionIndex}>
               <Divider>Actions</Divider>

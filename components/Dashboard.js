@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
 import { Badge, Button, ButtonGroup, Box, Container, CssBaseline, Grid, IconButton, Link, Paper, Toolbar, Tooltip,
-  Typography, FormGroup, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup } from '@mui/material';
+  Typography, FormGroup, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup, TextField } from '@mui/material';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { stringify } from 'yaml';
 
 import MuiAppBar from '@mui/material/AppBar';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import { allServiceNames, NewService } from './SchemaItems';
+import { NewService } from './SchemaItems';
 
 function Copyright(props) {
   return (
@@ -30,6 +30,7 @@ function Copyright(props) {
 
 const drawerWidth = 0;
 
+// TODO Simplify app bar
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
@@ -51,37 +52,18 @@ const AppBar = styled(MuiAppBar, {
 const mdTheme = createTheme();
 
 function DashboardContent() {
-  const [services, setServices] = React.useState(
-    allServiceNames.reduce((previous, current) => (
-      {
-        ...previous,
-        [current]: {
-          selected: false,
-          actions: {},
-          filters: {}
-        }
-      }
-    ), {})
-  );
-
-  const [selectedServices, setSelectedServices] = React.useState([]);
-  const [expandedPanel, setExpandedPanel] = React.useState('services');
+  const [selectedServices, setSelectedServices] = React.useState([null]);
   const [tooltipTitle, setTooltipTitle] = React.useState('Copy');
   const [tooltipOpen, setTooltipOpen] = React.useState(false);
   const [policyFormat, setPolicyFormat] = React.useState('yaml');
-  const [serviceCount, setServiceCount] = React.useState(1);
-
-  const handlePanel = (panel) => (event, isExpanded) => {
-    setExpandedPanel(isExpanded ? panel : false);
-  };
 
   const generateNewCustodianPolicy = React.useCallback(() => {
     const policies = {
-      policies: selectedServices.map((service) => {
+      policies: selectedServices.filter(s => s !== null).map((service) => {
         const serviceName = Object.keys(service)[0];
 
         return {
-          name: `${serviceName} policy`,
+          name: service[serviceName].name,
           resource: serviceName.split('.').pop(),
           actions: service[serviceName].actions.map(v => v.values),
           filters: service[serviceName].filters.map(v => v.values)
@@ -100,15 +82,21 @@ function DashboardContent() {
 
   const setServiceAtIndex = (index, config) => {
     setSelectedServices((existingServices) => {
-      if (config === null) {
-        existingServices.splice(index, 1);
-      } else {
-        existingServices[index] = config;
+      existingServices[index] = config;
+      return Array.from(existingServices);
+    });
+  }
+
+  const deleteServiceAtIndex = (index) => {
+    setSelectedServices((existingServices) => {
+      existingServices.splice(index, 1);
+      if (existingServices.length === 0) {
+        existingServices.push(null);
       }
 
       return Array.from(existingServices);
     });
-  }
+  };
 
   React.useEffect(() => {
     console.log('selected services changed:', selectedServices);
@@ -129,11 +117,6 @@ function DashboardContent() {
             >
               Cloud Custodian Policy Builder
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
           </Toolbar>
         </AppBar>
         <Box
@@ -152,16 +135,23 @@ function DashboardContent() {
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
-                {[...Array(serviceCount).keys()].map(serviceIndex => (
-                  <Paper key={serviceIndex} sx={{padding: 3, margin: 1}}>
-                    <NewService
-                      excludeServices={["TODO"]}
-                      setSelectedService={(config) => { setServiceAtIndex(serviceIndex, config) }}
-                    />
-                  </Paper>
-                ))}
+                {selectedServices.map((serviceConfig, serviceIndex) => {
+                  // Exclude all services that are already selected
+                  const excludeServices = selectedServices.slice(0, serviceIndex).filter(v => v !== null).map(v => Object.keys(v)[0]);
+
+                  return (
+                    <Paper key={serviceIndex} sx={{padding: 3, margin: 1}}>
+                      <NewService
+                        deleteMe={() => deleteServiceAtIndex(serviceIndex)}
+                        excludeServices={excludeServices}
+                        setSelectedService={(config) => setServiceAtIndex(serviceIndex, config)}
+                      />
+                    </Paper>
+                  )
+                })}
                 <Button
-                  onClick={() => setServiceCount((previous) => previous + 1)}
+                  disabled={selectedServices.includes(null)}
+                  onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}
                 >
                   Add another service
                 </Button>
