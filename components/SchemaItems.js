@@ -181,9 +181,10 @@ export function NewService(props) {
           sx={{width: '250px', margin: 1}}
           renderInput={(params) => <TextField {...params} label="Choose a service..." />}
           onChange={onServiceNameChange}
+          value={service === null ? null : Object.keys(service)[0]}
         />
 
-        <IconButton onClick={deleteMe}>
+        <IconButton onClick={() => { setService(null); deleteMe(); }}>
           <DeleteIcon />
         </IconButton>
       </Box>
@@ -203,7 +204,6 @@ export function NewService(props) {
                 type='action'
                 serviceName={Object.keys(service)[0]}
                 setSelectedActionOrFilter={(config) => { setActionAtIndex(actionIndex, config) }}
-                // setServiceAction={setServiceAction}
               />
             </React.Fragment>
           ))}
@@ -232,7 +232,6 @@ export function NewActionOrFilter(props) {
   // Clear value if service changes
   React.useEffect(() => {
     setActionOrFilter(null);
-    // TODO This isn't clearing the input field
   }, [serviceName]);
 
   React.useEffect(() => {
@@ -268,6 +267,7 @@ export function NewActionOrFilter(props) {
         sx={{width: '250px', margin: 1}}
         renderInput={(params) => <TextField {...params} label={"Choose " + (type === 'action' ? "an action" : "a filter") + "..."} />}
         onChange={(e, newValue) => setActionOrFilter(newValue)}
+        value={actionOrFilter}
       />
 
       {actionOrFilter &&

@@ -89,9 +89,10 @@ function DashboardContent() {
 
   const deleteServiceAtIndex = (index) => {
     setSelectedServices((existingServices) => {
-      existingServices.splice(index, 1);
-      if (existingServices.length === 0) {
-        existingServices.push(null);
+      existingServices[index] = null;
+      if (existingServices.every(v => v === null)) {
+        // Reduce to one-element array
+        existingServices = [null];
       }
 
       return Array.from(existingServices);
@@ -136,6 +137,11 @@ function DashboardContent() {
             <Grid container spacing={3}>
               <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
                 {selectedServices.map((serviceConfig, serviceIndex) => {
+                  // Ignore any deleted services, unless it's the last one in the list
+                  if (serviceConfig === null && serviceIndex < (selectedServices.length - 1)) {
+                    return <React.Fragment key={serviceIndex} />;
+                  }
+
                   // Exclude all services that are already selected
                   const excludeServices = selectedServices.slice(0, serviceIndex).filter(v => v !== null).map(v => Object.keys(v)[0]);
 
