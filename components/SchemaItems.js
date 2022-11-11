@@ -117,35 +117,6 @@ export function NewService(props) {
   const [actionCount, setActionCount] = React.useState(1);
   const [filterCount, setFilterCount] = React.useState(1);
 
-  const setServiceAction = (action, deleteOrAdd) => {
-    setService((prevService) => {
-      const serviceName = Object.keys(prevService)[0];
-
-      const actionIndex = prevService[serviceName].actions.findIndex((element) => {
-        return element.label === action.label;
-      });
-
-      if (deleteOrAdd === 'delete') {
-        if (actionIndex === -1) {
-          // Not found, nothing to do
-          return prevService;
-        }
-
-        prevService[serviceName].actions.splice(actionIndex, 1);
-      } else {
-        if (actionIndex === -1) {
-          // Not found, add it
-          prevService[serviceName].actions.push(action);
-        } else {
-          // Update existing action
-          prevService[serviceName].actions[actionIndex] = action;
-        }
-      }
-
-      return {...prevService};
-    });
-  }
-
   const setActionAtIndex = (index, action) => {
     setService((prevService) => {
       const serviceName = Object.keys(prevService)[0];
@@ -158,7 +129,21 @@ export function NewService(props) {
 
       return {...prevService};
     });
-  }
+  };
+
+  const setFilterAtIndex = (index, filter) => {
+    setService((prevService) => {
+      const serviceName = Object.keys(prevService)[0];
+
+      if (filter === null) {
+        prevService[serviceName].filters.splice(index, 1);
+      } else {
+        prevService[serviceName].filters[index] = filter;
+      }
+
+      return {...prevService};
+    });
+  };
 
   const onServiceNameChange = (e, newValue) => {
     if (newValue === null) {
@@ -192,58 +177,63 @@ export function NewService(props) {
           {[...Array(actionCount).keys()].map(actionIndex => (
             <React.Fragment key={actionIndex}>
               <Divider>Actions</Divider>
-              <NewAction
+              <NewActionOrFilter
+                type='action'
                 serviceName={Object.keys(service)[0]}
-                setSelectedAction={(config) => { setActionAtIndex(actionIndex, config) }}
-                setServiceAction={setServiceAction}
+                setSelectedActionOrFilter={(config) => { setActionAtIndex(actionIndex, config) }}
+                // setServiceAction={setServiceAction}
               />
             </React.Fragment>
           ))}
 
-          {/* {[...Array(filterCount).keys()].map(filterIndex => (
+          {[...Array(filterCount).keys()].map(filterIndex => (
             <React.Fragment key={filterIndex}>
               <Divider>Filters</Divider>
-              <NewFilter serviceName={Object.keys(service)[0]} />
+              <NewActionOrFilter
+                type='filter'
+                serviceName={Object.keys(service)[0]}
+                setSelectedActionOrFilter={(config) => { setFilterAtIndex(filterIndex, config) }}
+              />
             </React.Fragment>
-          ))} */}
+          ))}
         </React.Fragment>
       }
     </React.Fragment>
   );
 }
 
-export function NewAction(props) {
-  const { serviceName, setSelectedAction, setServiceAction } = props;
+export function NewActionOrFilter(props) {
+  const { serviceName, setSelectedActionOrFilter, type } = props;
 
-  const [action, setAction] = React.useState(null);
+  const [actionOrFilter, setActionOrFilter] = React.useState(null);
 
-  // Clear action if service changes
+  // Clear value if service changes
   React.useEffect(() => {
-    setAction(null);
+    setActionOrFilter(null);
     // TODO This isn't clearing the input field
   }, [serviceName]);
 
   React.useEffect(() => {
-    setSelectedAction(action);
-  }, [action]);
+    setSelectedActionOrFilter(actionOrFilter);
+  }, [actionOrFilter]);
 
   const setProperty = (property, value) => {
-    setAction((prevAction) => {
-      if (!prevAction.values) {
-        prevAction.values = {};
+    setActionOrFilter((previous) => {
+      if (!previous.values) {
+        previous.values = {};
       }
 
       if (value === null || value.length === 0) {
-        if (property in prevAction.values) {
-          delete prevAction.values[property];
+        if (property in previous.values) {
+          delete previous.values[property];
         } else {
-          return prevAction;
+          return previous;
         }
       } else {
-        prevAction.values[property] = value;
+        previous.values[property] = value;
       }
 
-      return {...prevAction};
+      return {...previous};
     });
   };
 
@@ -251,21 +241,21 @@ export function NewAction(props) {
     <React.Fragment>
       <Autocomplete
         disableClearable
-        options={getNewServiceActions(serviceName)}
+        options={type === 'action' ? getNewServiceActions(serviceName) : getNewServiceFilters(serviceName)}
         isOptionEqualToValue={(option, value) => option.label === value.label }
         sx={{width: '250px', margin: 1}}
-        renderInput={(params) => <TextField {...params} label="Choose an action..." />}
-        onChange={(e, newValue) => setAction(newValue)}
+        renderInput={(params) => <TextField {...params} label={"Choose " + (type === 'action' ? "an action" : "a filter") + "..."} />}
+        onChange={(e, newValue) => setActionOrFilter(newValue)}
       />
 
-      {action &&
+      {actionOrFilter &&
         <React.Fragment>
-          {action.config.docs &&
+          {actionOrFilter.config.docs &&
             <React.Fragment>
-              <Typography>{action.config.docs.doc}</Typography>
+              <Typography>{actionOrFilter.config.docs.doc}</Typography>
               <Link
                 underline='none'
-                href={action.config.docs.link}
+                href={actionOrFilter.config.docs.link}
                 target="_blank"
                 rel="noopener"
               >
@@ -276,8 +266,8 @@ export function NewAction(props) {
           }
 
           <PropertiesTable
-            properties={action.config.properties}
-            requiredProperties={action.config.required}
+            properties={actionOrFilter.config.properties}
+            requiredProperties={actionOrFilter.config.required}
             setProperty={setProperty}
           />
         </React.Fragment>
@@ -311,62 +301,6 @@ export function PropertiesTable(props) {
         </TableBody>
       </Table>
     </TableContainer>
-  );
-}
-
-export function NewFilter(props) {
-  const { serviceName } = props;
-
-  const [filter, setFilter] = React.useState(null);
-
-  React.useEffect(() => {
-    if (filter !== null) {
-      console.log('selected filter:', filter);
-    }
-  }, [filter]);
-
-  return (
-    <React.Fragment>
-      <Autocomplete
-        disableClearable
-        options={getNewServiceFilters(serviceName)}
-        isOptionEqualToValue={(option, value) => option.label === value.label }
-        sx={{width: '250px', margin: 1}}
-        renderInput={(params) => <TextField {...params} label="Choose a filter..." />}
-        onChange={(e, newValue) => setFilter(newValue)}
-      />
-
-      {filter &&
-        <React.Fragment>
-          {filter.config.docs &&
-            <React.Fragment>
-              <Typography>{filter.config.docs.doc}</Typography>
-              <Link
-                underline='none'
-                href={filter.config.docs.link}
-                target="_blank"
-                rel="noopener"
-              >
-                Documentation
-              </Link>
-              <Typography paragraph />
-            </React.Fragment>
-          }
-
-          <Typography variant='overline'>Parameters</Typography>
-          <Grid container>
-            {Object.keys(filter.config.properties).map((param) => (
-              <NewParameter
-                key={param}
-                name={param}
-                config={filter.config.properties[param]}
-                isRequired={filter.config.required && filter.config.required.includes(param)}
-              />
-            ))}
-          </Grid>
-        </React.Fragment>
-      }
-    </React.Fragment>
   );
 }
 
@@ -461,6 +395,7 @@ export function ParameterInput(props) {
 
             break;
           case 'object':
+            // TODO
             setInputElement(<Typography>object</Typography>);
             break;
           case 'string':

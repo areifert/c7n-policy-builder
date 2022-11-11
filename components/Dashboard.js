@@ -83,10 +83,8 @@ function DashboardContent() {
         return {
           name: `${serviceName} policy`,
           resource: serviceName.split('.').pop(),
-          actions: service[serviceName].actions.map(a => a.values),
-            // return a.config.properties;
-          // }),
-          filters: service[serviceName].filters
+          actions: service[serviceName].actions.map(v => v.values),
+          filters: service[serviceName].filters.map(v => v.values)
         };
       })
     };
