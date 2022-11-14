@@ -90,6 +90,10 @@ function DashboardContent() {
   const deleteServiceAtIndex = (index) => {
     setSelectedServices((existingServices) => {
       existingServices[index] = null;
+      if (index > 0 && index === (existingServices.length - 1)) {
+        existingServices.pop();
+      }
+
       if (existingServices.every(v => v === null)) {
         // Reduce to one-element array
         existingServices = [null];
@@ -143,24 +147,24 @@ function DashboardContent() {
                   }
 
                   // Exclude all services that are already selected
-                  const excludeServices = selectedServices.slice(0, serviceIndex).filter(v => v !== null).map(v => Object.keys(v)[0]);
+                  const excludedServices = selectedServices.filter((v, i) => v !== null && i !== serviceIndex).map(v => Object.keys(v)[0]);
 
                   return (
-                    <Paper key={serviceIndex} sx={{padding: 3, margin: 1}}>
+                    <Paper key={serviceIndex} sx={{padding: 3}}>
                       <NewService
                         deleteMe={() => deleteServiceAtIndex(serviceIndex)}
-                        excludeServices={excludeServices}
+                        excludedServices={excludedServices}
                         setSelectedService={(config) => setServiceAtIndex(serviceIndex, config)}
                       />
                     </Paper>
                   )
                 })}
-                <Button
-                  disabled={selectedServices.includes(null)}
-                  onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}
-                >
-                  Add another service
-                </Button>
+
+                {selectedServices.at(-1) !== null &&
+                  <Button onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}>
+                    Add another service
+                  </Button>
+                }
               </Grid>
 
               <Grid item sm={6}>

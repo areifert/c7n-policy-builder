@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Autocomplete, Box, Divider, Grid, IconButton, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Autocomplete, Box, Button, Divider, Grid, IconButton, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import c7n_schema from '../public/c7n-schema.json';
@@ -112,39 +112,9 @@ export function getNewServiceFilters(serviceName) {
 }
 
 export function NewService(props) {
-  const { deleteMe, excludeServices, setSelectedService } = props;
+  const { deleteMe, excludedServices, setSelectedService } = props;
 
   const [service, setService] = React.useState(null);
-  const [actionCount, setActionCount] = React.useState(1);
-  const [filterCount, setFilterCount] = React.useState(1);
-
-  const setActionAtIndex = (index, action) => {
-    setService((prevService) => {
-      const serviceName = Object.keys(prevService)[0];
-
-      if (action === null) {
-        prevService[serviceName].actions.splice(index, 1);
-      } else {
-        prevService[serviceName].actions[index] = action;
-      }
-
-      return {...prevService};
-    });
-  };
-
-  const setFilterAtIndex = (index, filter) => {
-    setService((prevService) => {
-      const serviceName = Object.keys(prevService)[0];
-
-      if (filter === null) {
-        prevService[serviceName].filters.splice(index, 1);
-      } else {
-        prevService[serviceName].filters[index] = filter;
-      }
-
-      return {...prevService};
-    });
-  };
 
   const setActionOrFilterAtIndex = (type, index, config) => {
     setService((prevService) => {
@@ -162,6 +132,22 @@ export function NewService(props) {
     });
   };
 
+  const addActionOrFilter = (type) => {
+    setService((prevService) => {
+      const serviceName = Object.keys(prevService)[0];
+
+      let arrayRef;
+      if (type === 'action') {
+        arrayRef = prevService[serviceName].actions;
+      } else {
+        arrayRef = prevService[serviceName].filters;
+      }
+
+      arrayRef.push(null);
+      return {...prevService};
+    });
+  };
+
   const deleteActionOrFilterAtIndex = (type, index) => {
     setService((prevService) => {
       const serviceName = Object.keys(prevService)[0];
@@ -174,6 +160,10 @@ export function NewService(props) {
       }
 
       arrayRef[index] = null;
+      if (index > 0 && index === (arrayRef.length - 1)) {
+        arrayRef.pop();
+      }
+
       if (arrayRef.every(v => v === null)) {
         // Reduce to one-element array
         while (arrayRef.length > 1) {
@@ -216,16 +206,19 @@ export function NewService(props) {
       <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between'}}>
         <Autocomplete
           disableClearable
-          options={allServiceNames.filter(v => !excludeServices.includes(v))}
+          options={allServiceNames}
+          getOptionDisabled={option => excludedServices.includes(option)}
           sx={{width: '250px', margin: 1}}
           renderInput={(params) => <TextField {...params} label="Choose a service..." />}
           onChange={onServiceNameChange}
           value={service === null ? null : Object.keys(service)[0]}
         />
 
-        <IconButton onClick={() => { setService(null); deleteMe(); }}>
-          <DeleteIcon />
-        </IconButton>
+        {service !== null &&
+          <IconButton onClick={() => { setService(null); deleteMe(); }}>
+            <DeleteIcon />
+          </IconButton>
+        }
       </Box>
 
       {service &&
@@ -238,29 +231,53 @@ export function NewService(props) {
               value={service[serviceName].name}
             />
 
-            {service[serviceName].actions.map((v, actionIndex) => (
-              <React.Fragment key={actionIndex}>
-                <Divider>Actions</Divider>
+            <Divider>Actions</Divider>
+            {service[serviceName].actions.map((v, actionIndex) => {
+              // Ignore any deleted actions, unless it's the last one in the list
+              if (v === null && actionIndex < (service[serviceName].actions.length - 1)) {
+                return <React.Fragment key={actionIndex} />;
+              }
+
+              return (
                 <NewActionOrFilter
+                  key={actionIndex}
                   type='action'
                   deleteMe={() => deleteActionOrFilterAtIndex('action', actionIndex)}
+                  excludedOptions={service[serviceName].actions.filter((v, i) => v !== null && i !== actionIndex).map(v => v.label)}
                   serviceName={Object.keys(service)[0]}
                   setSelectedActionOrFilter={(config) => setActionOrFilterAtIndex('action', actionIndex, config)}
                 />
-              </React.Fragment>
-            ))}
+              );
+            })}
+            {Object.values(service)[0].actions.at(-1) !== null &&
+              <Button onClick={() => addActionOrFilter('action')}>
+                Add another action
+              </Button>
+            }
 
-            {service[serviceName].filters.map((v, filterIndex) => (
-              <React.Fragment key={filterIndex}>
-                <Divider>Filters</Divider>
+            <Divider>Filters</Divider>
+            {service[serviceName].filters.map((v, filterIndex) => {
+              // Ignore any deleted actions, unless it's the last one in the list
+              if (v === null && filterIndex < (service[serviceName].filters.length - 1)) {
+                return <React.Fragment key={actionIndex} />;
+              }
+
+              return (
                 <NewActionOrFilter
+                  key={filterIndex}
                   type='filter'
                   deleteMe={() => deleteActionOrFilterAtIndex('filter', filterIndex)}
+                  excludedOptions={service[serviceName].filters.filter((v, i) => v !== null && i !== filterIndex).map(v => v.label)}
                   serviceName={Object.keys(service)[0]}
                   setSelectedActionOrFilter={(config) => setActionOrFilterAtIndex('filter', filterIndex, config)}
                 />
-              </React.Fragment>
-            ))}
+              );
+            })}
+            {Object.values(service)[0].filters.at(-1) !== null &&
+              <Button onClick={() => addActionOrFilter('filter')}>
+                Add another filter
+              </Button>
+            }
           </React.Fragment>
         ))
       }
@@ -269,7 +286,7 @@ export function NewService(props) {
 }
 
 export function NewActionOrFilter(props) {
-  const { deleteMe, serviceName, setSelectedActionOrFilter, type } = props;
+  const { deleteMe, excludedOptions, serviceName, setSelectedActionOrFilter, type } = props;
 
   const [actionOrFilter, setActionOrFilter] = React.useState(null);
 
@@ -304,10 +321,11 @@ export function NewActionOrFilter(props) {
 
   return (
     <React.Fragment>
-      <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between'}}>
+      <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between', mt: 2}}>
         <Autocomplete
           disableClearable
           options={type === 'action' ? getNewServiceActions(serviceName) : getNewServiceFilters(serviceName)}
+          getOptionDisabled={(option) => excludedOptions.includes(option.label)}
           isOptionEqualToValue={(option, value) => option.label === value.label }
           sx={{width: '250px', margin: 1}}
           renderInput={(params) => <TextField {...params} label={"Choose " + (type === 'action' ? "an action" : "a filter") + "..."} />}
@@ -315,9 +333,11 @@ export function NewActionOrFilter(props) {
           value={actionOrFilter}
         />
 
-        <IconButton onClick={() => { setActionOrFilter(null); deleteMe(); }}>
-          <DeleteIcon />
-        </IconButton>
+        {actionOrFilter !== null &&
+          <IconButton onClick={() => { setActionOrFilter(null); deleteMe(); }}>
+            <DeleteIcon />
+          </IconButton>
+        }
       </Box>
 
       {actionOrFilter &&
