@@ -12,7 +12,11 @@ export function getServiceConfig(serviceName) {
   return c7n_schema.definitions.resources[serviceName];
 }
 
-export function sortAutocompleteOptions(options) {
+export function getServicePolicies(serviceName) {
+  return getServiceConfig(serviceName).policy.allOf.filter(v => Object.keys(v).includes('properties'));
+}
+
+function sortAutocompleteOptions(options) {
   options.sort((a, b) => {
     const labelA = a.label.toLowerCase();
     const labelB = b.label.toLowerCase();
@@ -31,84 +35,52 @@ export function sortAutocompleteOptions(options) {
     .filter(v => 'properties' in v.config);
 }
 
-export function getNewServiceActions(serviceName) {
-  let actions = [];
-
-  const commonActions = c7n_schema.definitions.actions;
-  const serviceActions = getServiceConfig(serviceName).actions;
-
-  for (const action in commonActions) {
-    if (!commonActions[action]?.properties) {
-      continue
+function lookupRef(ref) {
+  const refPath = ref.split('/');
+  let resolvedRef;
+  for (let i = 0; i < refPath.length; i++) {
+    const pathElement = refPath[i];
+    if (pathElement === '#') {
+      resolvedRef = c7n_schema;
+    } else {
+      resolvedRef = resolvedRef[pathElement];
     }
-
-    actions.push({
-      label: action.split('.').pop(),
-      name: action,
-      config: {
-        ...commonActions[action],
-        docs: c7n_docs.common_actions[action]
-      }
-    });
   }
 
-  for (const action in serviceActions) {
-    if (!serviceActions[action]?.properties) {
-      continue
-    }
-
-    actions.push({
-      label: action,
-      config: {
-        ...serviceActions[action],
-        docs: c7n_docs[serviceName].actions[action]
-      }
-    });
-  }
-
-  actions = sortAutocompleteOptions(actions);
-
-  return actions;
+  return resolvedRef;
 }
 
-export function getNewServiceFilters(serviceName) {
-  let filters = [];
-
-  const commonFilters = c7n_schema.definitions.filters;
-  const serviceFilters = getServiceConfig(serviceName).filters;
-
-  for (const filter in commonFilters) {
-    if (!commonFilters[filter]?.properties) {
-      continue
-    }
-
-    filters.push({
-      label: filter.split('.').pop(),
-      name: filter,
-      config: {
-        ...commonFilters[filter],
-        docs: c7n_docs.common_filters[filter]
-      }
-    });
+export function getPropertiesForType(type, serviceName) {
+  let properties = [];
+  const servicePolicies = getServicePolicies(serviceName);
+  let commonDocs, propertyType;
+  if (type === 'action') {
+    commonDocs = c7n_docs.common_actions;
+    propertyType = 'actions';
+  } else {
+    commonDocs = c7n_docs.common_filters;
+    propertyType = 'filters';
   }
 
-  for (const filter in serviceFilters) {
-    if (!serviceFilters[filter]?.properties) {
-      continue
-    }
+  for (let i = 0; i < servicePolicies.length; i++) {
+    const refList = servicePolicies[i].properties[propertyType].items.anyOf.filter(v => Object.keys(v).includes("$ref"));
+    for (let j = 0; j < refList.length; j++) {
+      const config = lookupRef(refList[j]["$ref"]);
+      const name = refList[j]["$ref"].split('/').pop();
 
-    filters.push({
-      label: filter,
-      config: {
-        ...serviceFilters[filter],
-        docs: c7n_docs[serviceName].filters[filter]
-      }
-    });
+      properties.push({
+        label: name.split('.').pop(),
+        config: {
+          ...config,
+          docs: c7n_docs[serviceName][propertyType][name] || commonDocs[name]
+        }
+      });
+    }
   }
 
-  filters = sortAutocompleteOptions(filters);
+  // TODO Also need to support comparison operators (-and, -or, etc.)
 
-  return filters;
+  return sortAutocompleteOptions(properties);
 }
 
 export function NewService(props) {
@@ -324,7 +296,7 @@ export function NewActionOrFilter(props) {
       <Box sx={{display: 'flex', flexGrow: 1, justifyContent: 'space-between', mt: 2}}>
         <Autocomplete
           disableClearable
-          options={type === 'action' ? getNewServiceActions(serviceName) : getNewServiceFilters(serviceName)}
+          options={getPropertiesForType(type, serviceName)}
           getOptionDisabled={(option) => excludedOptions.includes(option.label)}
           isOptionEqualToValue={(option, value) => option.label === value.label }
           sx={{width: '250px', margin: 1}}
@@ -425,7 +397,7 @@ export function ParameterInput(props) {
     }
 
     const number = value.trim();
-    if (/^\d+$/.test(number)) {
+    if (/^\d*\.?\d+$/.test(number)) {
       if (minimum !== undefined && number < minimum) {
         return false;
       }
@@ -438,16 +410,44 @@ export function ParameterInput(props) {
     }
 
     return false;
-  }
+  };
+
 
   React.useEffect(() => {
     if (config.type) {
       if (Array.isArray(config.type)) {
         // TODO
+        setInputElement(<Typography>multiple</Typography>);
       } else {
         switch (config.type) {
           case 'array':
-            setInputElement(<Typography>a</Typography>);
+            // TODO
+            let itemType;
+            if (config.items) {
+              if (config.items.type) {
+                itemType = config.items.type;
+              } else if (config.items["$ref"]) {
+                itemType = "$ref";
+                console.log("$ref:", config.items["$ref"]);
+                console.log('resolved ref:', lookupRef(config.items["$ref"]));
+              }
+            }
+
+            // TODO Handle config.minItems
+
+            // This should work for simple items (strings, numbers, etc.), need something more for objects
+            setInputElement(
+              <TextField
+                fullWidth
+                multiline
+                maxRows={3}
+                label="Enter one value per line..."
+                error={isRequired && (value === null || value.length === 0)}
+                required={isRequired}
+                onChange={e => setValue(e.target.value.split("\n").map(v => v.trim()).filter(v => v.length > 0))}
+              />
+            );
+
             break;
           case 'boolean':
             setInputElement(
@@ -514,7 +514,7 @@ export function ParameterInput(props) {
             }
             break;
           default:
-            // setInputElement(<Typography>{config.type}</Typography>);
+            setInputElement(<Typography>{config.type}</Typography>);
             break;
         }
       }
