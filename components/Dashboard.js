@@ -62,6 +62,14 @@ function DashboardContent() {
       policies: selectedServices.filter(s => s !== null).map((service) => {
         const serviceName = Object.keys(service)[0];
 
+        // TODO Add support for "description", "mode", and "conditions"
+
+        /* TODO Allow users to use generic filters, e.g.:
+        filters:
+        - "tag:Name": xyz
+        - State.Name: running
+        */
+
         return {
           name: service[serviceName].name,
           resource: serviceName.split('.').pop(),
@@ -137,7 +145,7 @@ function DashboardContent() {
           }}
         >
           <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
               <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
                 {selectedServices.map((serviceConfig, serviceIndex) => {
