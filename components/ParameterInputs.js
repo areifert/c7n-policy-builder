@@ -76,6 +76,8 @@ export function ParameterInput(props) {
               }
             }
 
+            // TODO Handle patternProperties
+
             if (itemType === "string") {
               setInputElement(
                 <StringInput
@@ -167,7 +169,12 @@ export function ParameterInput(props) {
       }
 
     } else if (config.oneOf) {
+      setInputElement(<Typography>oneOf</Typography>);
       // TODO
+    } else {
+      // TODO
+      console.log('unknown input:', config);
+      setInputElement(<Typography>unknown</Typography>);
     }
   }, [config, isRequired, value, setValue, setInputElement]);
 
@@ -264,6 +271,10 @@ export function StringInput(props) {
   const [inputValue, setInputValue] = React.useState(null);
 
   const stringValid = (value) => {
+    if (value === null || value.length === 0) {
+      return true;
+    }
+
     if (Array.isArray(value)) {
       return value.every(v => stringValid(v));
     }
@@ -272,7 +283,7 @@ export function StringInput(props) {
       return new RegExp(pattern).test(value);
     }
 
-    return value !== null && value.length !== 0;
+    return true;
   };
 
   React.useEffect(() => {
@@ -296,12 +307,13 @@ export function StringInput(props) {
       <TextField
         fullWidth
         multiline={multiline}
-        error={isRequired && !stringValid(inputValue)}
+        error={(isRequired && (inputValue === null || inputValue.length === 0)) || !stringValid(inputValue)}
         required={isRequired}
         label={multiline ? 'Enter one value per line...' : 'Value...'}
+        helperText={pattern ? 'Pattern: ' + pattern : ''}
         onChange={e => {
           if (multiline) {
-            setValue(e.target.value.split("\n")
+            setInputValue(e.target.value.split("\n")
               .map(v => v.trim())
               .filter(v => v.length > 0)
             );
@@ -319,6 +331,8 @@ export function ObjectInput(props) {
 
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(null);
+
+  // TODO Handle patternProperties
 
   return (
     config.properties ? (
