@@ -37,7 +37,7 @@ function sortAutocompleteOptions(options) {
     .filter(v => 'properties' in v.config);
 }
 
-function lookupRef(ref) {
+export function lookupRef(ref) {
   const refPath = ref.split('/');
   let resolvedRef;
   for (let i = 0; i < refPath.length; i++) {

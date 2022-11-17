@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Grid, IconButton, Link, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { lookupRef } from './SchemaItems';
 
 export function PropertiesTable(props) {
   const { properties, requiredProperties, setProperty } = props;
@@ -54,25 +55,27 @@ export function NewParameter(props) {
 export function ParameterInput(props) {
   const { name, config, isRequired, setProperty } = props;
 
+  const resolvedConfig = config["$ref"] ? lookupRef(config["$ref"]) : config;
+
   const [inputElement, setInputElement] = React.useState(null);
   const [value, setValue] = React.useState(null);
 
   React.useEffect(() => {
-    if (config.type) {
-      if (Array.isArray(config.type)) {
+    if (resolvedConfig.type) {
+      if (Array.isArray(resolvedConfig.type)) {
         // TODO
         setInputElement(<Typography>multiple</Typography>);
       } else {
-        switch (config.type) {
+        switch (resolvedConfig.type) {
           case 'array':
             let itemType = "string";
-            if (config.items) {
-              if (config.items.type) {
-                itemType = config.items.type;
-              } else if (config.items["$ref"]) {
+            if (resolvedConfig.items) {
+              if (resolvedConfig.items.type) {
+                itemType = resolvedConfig.items.type;
+              } else if (resolvedConfig.items["$ref"]) {
                 itemType = "$ref";
-                console.log("$ref:", config.items["$ref"]);
-                console.log('resolved ref:', lookupRef(config.items["$ref"]));
+                console.log("$ref:", resolvedConfig.items["$ref"]);
+                console.log('resolved ref:', lookupRef(resolvedConfig.items["$ref"]));
               }
             }
 
@@ -82,8 +85,8 @@ export function ParameterInput(props) {
               setInputElement(
                 <StringInput
                   multiline
-                  choices={config?.items?.enum}
-                  pattern={config?.items?.pattern}
+                  choices={resolvedConfig?.items?.enum}
+                  pattern={resolvedConfig?.items?.pattern}
                   isRequired={isRequired}
                   setValue={setValue}
                 />
@@ -119,8 +122,8 @@ export function ParameterInput(props) {
           case 'number':
             setInputElement(
               <NumberInput
-                minimum={config?.minimum}
-                maximum={config?.maximum}
+                minimum={resolvedConfig?.minimum}
+                maximum={resolvedConfig?.maximum}
                 isRequired={isRequired}
                 setValue={setValue}
               />
@@ -131,8 +134,9 @@ export function ParameterInput(props) {
             // TODO
             setInputElement(
               <ObjectInput
-                config={config}
+                config={resolvedConfig}
                 title={name}
+                initialValue={value}
                 isRequired={isRequired}
                 setValue={setValue}
               />
@@ -141,42 +145,42 @@ export function ParameterInput(props) {
           case 'string':
             setInputElement(
               <StringInput
-                choices={config?.enum}
+                choices={resolvedConfig?.enum}
                 isRequired={isRequired}
                 setValue={setValue}
               />
             );
             break;
           default:
-            setInputElement(<Typography>{config.type}</Typography>);
+            setInputElement(<Typography>{resolvedConfig.type}</Typography>);
             break;
         }
       }
-    } else if (config.enum) {
-      if (config.enum.length === 1) {
-        setInputElement(<Typography>{config.enum[0]}</Typography>);
-        setValue(config.enum[0]);
+    } else if (resolvedConfig.enum) {
+      if (resolvedConfig.enum.length === 1) {
+        setInputElement(<Typography>{resolvedConfig.enum[0]}</Typography>);
+        setValue(resolvedConfig.enum[0]);
       } else {
         setInputElement(
           <Autocomplete
             fullWidth
             required={isRequired}
-            options={config.enum}
+            options={resolvedConfig.enum}
             renderInput={(params) => <TextField {...params} label="Choose one..." />}
             onChange={(e, newValue) => setValue(newValue)}
           />
         );
       }
 
-    } else if (config.oneOf) {
+    } else if (resolvedConfig.oneOf) {
       setInputElement(<Typography>oneOf</Typography>);
       // TODO
     } else {
       // TODO
-      console.log('unknown input:', config);
+      console.log('unknown input:', resolvedConfig);
       setInputElement(<Typography>unknown</Typography>);
     }
-  }, [config, isRequired, value, setValue, setInputElement]);
+  }, [resolvedConfig, isRequired, value, setValue, setInputElement]);
 
   React.useEffect(() => {
     setProperty(value);
@@ -327,10 +331,9 @@ export function StringInput(props) {
 }
 
 export function ObjectInput(props) {
-  const {config, title, isRequired, setValue} = props;
+  const {config, title, initialValue, isRequired, setValue} = props;
 
   const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState(null);
 
   // TODO Handle patternProperties
 
@@ -339,41 +342,61 @@ export function ObjectInput(props) {
       <React.Fragment>
         <Button onClick={() => setOpen(true)}>Configure</Button>
         <ObjectDialog
-          title={title}
+          title={'Configure ' + title}
           properties={config.properties}
           requiredProperties={config.required}
-          setProperty={setInputValue}
+          setProperties={(name, value) => {
+            setValue((previousValue) => {
+              if (previousValue === null) {
+                if (value === null) {
+                  return previousValue;
+                }
+
+                previousValue = {};
+              }
+
+              if (value === null) {
+                if (Object.keys(previousValue).includes(name)) {
+                  delete previousValue[name];
+                }
+              } else {
+                previousValue[name] = value;
+              }
+
+              return {...previousValue};
+            });
+          }}
           open={open}
           onClose={() => setOpen(false)}
         />
       </React.Fragment>
     ) : (
+      // TODO Free-form objects should probably have a large text field that accepts (sanitized) YAML or JSON
       <StringInput
         choices={config?.enum}
         pattern={config?.pattern}
         isRequired={isRequired}
-        setValue={setInputValue}
+        setValue={setValue}
       />
     )
   );
 }
 
 export function ObjectDialog(props) {
-  const {title, properties, requiredProperties, setProperty, open, onClose} = props;
+  const {title, properties, requiredProperties, setProperties, open, onClose} = props;
 
   return (
-    <Dialog onClose={onClose} open={open}>
+    <Dialog onClose={onClose} open={open} fullWidth maxWidth='sm'>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <PropertiesTable
           properties={properties}
           requiredProperties={requiredProperties}
-          setProperty={setProperty}
+          setProperty={setProperties}
         />
       </DialogContent>
       <DialogActions>
-        <Button>Cancel</Button>
-        <Button>Done</Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );
