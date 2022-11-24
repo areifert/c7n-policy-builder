@@ -1,13 +1,37 @@
 import * as React from 'react';
 import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Grid, IconButton, Link, Paper, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { lookupRef } from './SchemaItems';
 
 export function PropertiesTable(props) {
   const { properties, requiredProperties, setProperty } = props;
 
   // TODO Handle additionalProperties
+  const getSortedProperties = React.useCallback(() => {
+    let sortedProperties = Object.keys(properties);
+    sortedProperties.sort((a, b) => {
+      if (requiredProperties) {
+        if (requiredProperties.includes(a)) {
+          if (!requiredProperties.includes(b)) {
+            return -1;
+          }
+        } else if (requiredProperties.includes(b)) {
+          return 1;
+        }
+      }
+
+      if (a < b) {
+        return -1;
+      } else if (a > b) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    return sortedProperties;
+  }, [properties, requiredProperties]);
 
   return (
     <TableContainer component={Paper}>
@@ -19,7 +43,7 @@ export function PropertiesTable(props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.keys(properties).map((property) => (
+          {getSortedProperties().map((property) => (
             <NewParameter
               key={property}
               name={property}
