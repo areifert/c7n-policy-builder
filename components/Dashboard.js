@@ -1,14 +1,17 @@
 import * as React from 'react';
-import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
-import { Badge, Button, ButtonGroup, Box, Container, CssBaseline, Grid, IconButton, Link, Paper, Toolbar, Tooltip,
-  Typography, FormGroup, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup, TextField } from '@mui/material';
+import { createTheme, useTheme, ThemeProvider } from '@mui/material/styles';
+import { AppBar, Badge, Button, ButtonGroup, Box, Container, CssBaseline, Grid, IconButton, Link, Paper, Toolbar, Tooltip,
+  Typography, FormGroup, FormControlLabel, Switch, ToggleButton, ToggleButtonGroup, TextField, useMediaQuery } from '@mui/material';
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
-import DeleteIcon from '@mui/icons-material/Delete';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 import { stringify } from 'yaml';
 
-import MuiAppBar from '@mui/material/AppBar';
 import { NewService } from './SchemaItems';
+
+const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
 function Copyright(props) {
   return (
@@ -28,34 +31,19 @@ function Copyright(props) {
   );
 }
 
-const drawerWidth = 0;
-
-// TODO Simplify app bar
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  }),
-}));
-
-const mdTheme = createTheme();
-
 function DashboardContent() {
   const [selectedServices, setSelectedServices] = React.useState([null]);
   const [tooltipTitle, setTooltipTitle] = React.useState('Copy');
   const [tooltipOpen, setTooltipOpen] = React.useState(false);
   const [policyFormat, setPolicyFormat] = React.useState('yaml');
+
+  const theme = useTheme();
+  const colorMode = React.useContext(ColorModeContext);
+
+  const handlePolicyImport = (e) => {
+    console.log(e.target.files[0]);
+    // TODO
+  };
 
   const generateNewCustodianPolicy = React.useCallback(() => {
     const policies = {
@@ -93,7 +81,7 @@ function DashboardContent() {
       existingServices[index] = config;
       return Array.from(existingServices);
     });
-  }
+  };
 
   const deleteServiceAtIndex = (index) => {
     setSelectedServices((existingServices) => {
@@ -116,106 +104,138 @@ function DashboardContent() {
   }, [selectedServices]);
 
   return (
-    <ThemeProvider theme={mdTheme}>
-      <Box sx={{ display: 'flex' }}>
-        <CssBaseline />
-        <AppBar position="absolute">
-          <Toolbar>
-            <Typography
-              component="h1"
-              variant="h6"
-              color="inherit"
-              noWrap
-              sx={{ flexGrow: 1 }}
-            >
-              Cloud Custodian Policy Builder
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Box
-          component="main"
-          sx={{
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
-            flexGrow: 1,
-            height: '100vh',
-            overflow: 'auto',
-          }}
-        >
-          <Toolbar />
-          <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Grid container spacing={3}>
-              <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
-                {selectedServices.map((serviceConfig, serviceIndex) => {
-                  // Ignore any deleted services, unless it's the last one in the list
-                  if (serviceConfig === null && serviceIndex < (selectedServices.length - 1)) {
-                    return <React.Fragment key={serviceIndex} />;
-                  }
-
-                  // Exclude all services that are already selected
-                  const excludedServices = selectedServices.filter((v, i) => v !== null && i !== serviceIndex).map(v => Object.keys(v)[0]);
-
-                  return (
-                    <Paper key={serviceIndex} sx={{padding: 3}}>
-                      <NewService
-                        deleteMe={() => deleteServiceAtIndex(serviceIndex)}
-                        excludedServices={excludedServices}
-                        setSelectedService={(config) => setServiceAtIndex(serviceIndex, config)}
-                      />
-                    </Paper>
-                  )
-                })}
-
-                {selectedServices.at(-1) !== null &&
-                  <Button onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}>
-                    Add another service
-                  </Button>
+    <Box sx={{
+      height: '100vh',
+      backgroundColor: (theme) =>
+        theme.palette.mode === 'light'
+          ? theme.palette.grey[100]
+          : theme.palette.grey[900],
+    }}>
+      <CssBaseline />
+      <AppBar position="static">
+        <Toolbar>
+          <Typography
+            component="div"
+            variant="h6"
+            noWrap
+            sx={{ flexGrow: 1 }}
+          >
+            Cloud Custodian Policy Builder
+          </Typography>
+          <IconButton
+            sx={{ mr: 1 }}
+            onClick={colorMode.toggleColorMode}
+            color="inherit"
+          >
+            {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
+          <Button component='label' variant='outlined' color='inherit' startIcon={<FileUploadOutlinedIcon />}>
+            <input hidden accept=".json,.yaml,.yml" type="file" onChange={handlePolicyImport} />
+            Import policy
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1 }}
+      >
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+          <Grid container spacing={3}>
+            <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
+              {selectedServices.map((serviceConfig, serviceIndex) => {
+                // Ignore any deleted services, unless it's the last one in the list
+                if (serviceConfig === null && serviceIndex < (selectedServices.length - 1)) {
+                  return <React.Fragment key={serviceIndex} />;
                 }
-              </Grid>
 
-              <Grid item sm={6}>
-                <Paper sx={{backgroundColor: 'black', maxHeight: '80vh', overflowY: 'auto'}}>
-                  <Box sx={{width: '100%', textAlign: 'end'}}>
-                    <ToggleButtonGroup exclusive color='standard' value={policyFormat} onChange={(e, newValue) => { if (newValue !== null) { setPolicyFormat(newValue) } }}>
-                      <ToggleButton value='json' color='warning' sx={{color: 'white', borderColor: 'white'}}>json</ToggleButton>
-                      <ToggleButton value='yaml' color='warning' sx={{color: 'white', borderColor: 'white'}}>yaml</ToggleButton>
-                    </ToggleButtonGroup>
+                // Exclude all services that are already selected
+                const excludedServices = selectedServices.filter((v, i) => v !== null && i !== serviceIndex).map(v => Object.keys(v)[0]);
 
-                    <Tooltip
-                      open={tooltipOpen}
-                      title={tooltipTitle}
-                      onOpen={() => setTooltipOpen(true)}
-                      onClose={() => { setTooltipOpen(false); setTimeout(() => { setTooltipTitle('Copy') }, 500); }}
-                    >
-                      <IconButton onClick={copyPolicyToClipboard}>
-                        <ContentCopyOutlinedIcon sx={{ color: 'white' }} />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                  <Typography
-                    sx={{
-                      color: mdTheme.palette.primary.contrastText,
-                      fontFamily: 'monospace',
-                      padding: '.5rem 1rem',
-                      whiteSpace: 'pre',
-                      wordWrap: 'break-word',
-                    }}
-                  >
-                    {generateNewCustodianPolicy()}
-                  </Typography>
-                </Paper>
-              </Grid>
+                return (
+                  <Paper key={serviceIndex} sx={{padding: 3}}>
+                    <NewService
+                      deleteMe={() => deleteServiceAtIndex(serviceIndex)}
+                      excludedServices={excludedServices}
+                      setSelectedService={(config) => setServiceAtIndex(serviceIndex, config)}
+                    />
+                  </Paper>
+                )
+              })}
+
+              {selectedServices.at(-1) !== null &&
+                <Button onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}>
+                  Add another service
+                </Button>
+              }
             </Grid>
-            <Copyright sx={{ pt: 4 }} />
-          </Container>
-        </Box>
+
+            <Grid item sm={6} sx={{maxHeight: '80vh', overflowY: 'auto'}}>
+              <Paper sx={{ backgroundColor: 'black' }}>
+                <Box sx={{width: '100%', textAlign: 'end'}}>
+                  <ToggleButtonGroup exclusive color='standard' value={policyFormat} onChange={(e, newValue) => { if (newValue !== null) { setPolicyFormat(newValue) } }}>
+                    <ToggleButton value='json' color='warning' sx={{color: 'white', borderColor: 'white'}}>json</ToggleButton>
+                    <ToggleButton value='yaml' color='warning' sx={{color: 'white', borderColor: 'white'}}>yaml</ToggleButton>
+                  </ToggleButtonGroup>
+
+                  <Tooltip
+                    open={tooltipOpen}
+                    title={tooltipTitle}
+                    onOpen={() => setTooltipOpen(true)}
+                    onClose={() => { setTooltipOpen(false); setTimeout(() => { setTooltipTitle('Copy') }, 500); }}
+                  >
+                    <IconButton onClick={copyPolicyToClipboard}>
+                      <ContentCopyOutlinedIcon sx={{ color: 'white' }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Typography
+                  sx={{
+                    color: (theme) =>
+                      theme.palette.mode === 'light'
+                        ? theme.palette.primary.contrastText
+                        : '',
+                    fontFamily: 'monospace',
+                    padding: '.5rem 1rem',
+                    whiteSpace: 'pre',
+                    wordWrap: 'break-word',
+                  }}
+                >
+                  {generateNewCustodianPolicy()}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Copyright sx={{ pt: 4 }} />
+        </Container>
       </Box>
-    </ThemeProvider>
+    </Box>
   );
 }
 
 export default function Dashboard() {
-  return <DashboardContent />;
+  const [mode, setMode] = React.useState('light');
+  const colorMode = React.useMemo(
+    () => ({
+      toggleColorMode: () => setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
+    }),
+    [],
+  );
+
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+        },
+      }),
+    [mode],
+  );
+
+  return (
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <DashboardContent />
+      </ThemeProvider>
+    </ColorModeContext.Provider>
+  );
 }
