@@ -12,11 +12,9 @@ export function PropertiesTable(props) {
     let sortedProperties = Object.keys(properties);
     sortedProperties.sort((a, b) => {
       if (requiredProperties) {
-        if (requiredProperties.includes(a)) {
-          if (!requiredProperties.includes(b)) {
-            return -1;
-          }
-        } else if (requiredProperties.includes(b)) {
+        if (requiredProperties.includes(a) && !requiredProperties.includes(b)) {
+          return -1;
+        } else if (requiredProperties.includes(b) && !requiredProperties.includes(a)) {
           return 1;
         }
       }
@@ -63,7 +61,12 @@ export function NewParameter(props) {
 
   return (
     <TableRow>
-      <TableCell sx={{fontFamily: 'monospace'}}>{name}{isRequired ? ' *' : ''}</TableCell>
+      <TableCell sx={{fontFamily: 'monospace'}}>
+        {name}
+        {isRequired &&
+          <sup>*</sup>
+        }
+      </TableCell>
       <TableCell>
         <ParameterInput
           name={name}
@@ -214,9 +217,9 @@ export function ParameterInput(props) {
 }
 
 export function NumberInput(props) {
-  const {minimum, maximum, multiline, isRequired, setValue} = props;
+  const {minimum, maximum, multiline, isRequired, defaultValue, setValue} = props;
 
-  const [inputValue, setInputValue] = React.useState(null);
+  const [inputValue, setInputValue] = React.useState(defaultValue || '');
 
   let helperText = '';
   if (minimum !== undefined) {
@@ -274,17 +277,19 @@ export function NumberInput(props) {
       required={isRequired}
       label={multiline ? 'Enter one number per line...' : 'Number...'}
       helperText={helperText}
+      defaultValue={defaultValue}
       onChange={e => setInputValue(e.target.value.trim())}
     />
   );
 }
 
 export function BooleanInput(props) {
-  const {isRequired, setValue} = props;
+  const {isRequired, defaultValue, setValue} = props;
 
   return (
     <Autocomplete
       fullWidth
+      defaultValue={defaultValue}
       required={isRequired}
       options={['true', 'false']}
       renderInput={(params) => <TextField {...params} label="true / false" />}
@@ -294,9 +299,9 @@ export function BooleanInput(props) {
 }
 
 export function StringInput(props) {
-  const {choices, multiline, pattern, isRequired, setValue} = props;
+  const {choices, multiline, pattern, isRequired, defaultValue, setValue} = props;
 
-  const [inputValue, setInputValue] = React.useState(null);
+  const [inputValue, setInputValue] = React.useState(defaultValue || null);
 
   const stringValid = (value) => {
     if (value === null || value.length === 0) {
@@ -326,6 +331,7 @@ export function StringInput(props) {
     choices ? (
       <Autocomplete
         fullWidth
+        defaultValue={defaultValue}
         required={isRequired}
         options={choices}
         renderInput={(params) => <TextField {...params} label="Choose one..." />}
@@ -334,6 +340,7 @@ export function StringInput(props) {
     ) : (
       <TextField
         fullWidth
+        defaultValue={defaultValue}
         multiline={multiline}
         error={(isRequired && (inputValue === null || inputValue.length === 0)) || !stringValid(inputValue)}
         required={isRequired}
