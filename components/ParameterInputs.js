@@ -362,6 +362,7 @@ export function StringInput(props) {
 }
 
 export function ObjectInput(props) {
+  // TODO Allow for configurable/custom objects
   const {config, title, initialValue, isRequired, setValue} = props;
 
   const [open, setOpen] = React.useState(false);
