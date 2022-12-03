@@ -163,7 +163,7 @@ function DashboardContent() {
               })}
 
               {selectedServices.at(-1) !== null &&
-                <Button onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}>
+                <Button sx={{margin: 1}} onClick={() => setSelectedServices((previous) => { previous.push(null); return Array.from(previous); })}>
                   Add another service
                 </Button>
               }

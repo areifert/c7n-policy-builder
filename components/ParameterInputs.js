@@ -5,28 +5,34 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { lookupRef } from './SchemaItems';
 
 export function PropertiesTable(props) {
-  const { properties, requiredProperties, setProperty } = props;
+  // TODO Add an option to allow new properties to be added by the user (for free-form objects)
+  const { properties, requiredProperties, setProperty, isExtensible } = props;
+
+  const [customProperties, setCustomProperties] = React.useState([]);
 
   // TODO Handle additionalProperties
   const getSortedProperties = React.useCallback(() => {
-    let sortedProperties = Object.keys(properties);
-    sortedProperties.sort((a, b) => {
-      if (requiredProperties) {
-        if (requiredProperties.includes(a) && !requiredProperties.includes(b)) {
-          return -1;
-        } else if (requiredProperties.includes(b) && !requiredProperties.includes(a)) {
-          return 1;
+    let sortedProperties = [];
+    if (properties) {
+      sortedProperties = Object.keys(properties);
+      sortedProperties.sort((a, b) => {
+        if (requiredProperties) {
+          if (requiredProperties.includes(a) && !requiredProperties.includes(b)) {
+            return -1;
+          } else if (requiredProperties.includes(b) && !requiredProperties.includes(a)) {
+            return 1;
+          }
         }
-      }
 
-      if (a < b) {
-        return -1;
-      } else if (a > b) {
-        return 1;
-      } else {
-        return 0;
-      }
-    });
+        if (a < b) {
+          return -1;
+        } else if (a > b) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+    }
 
     return sortedProperties;
   }, [properties, requiredProperties]);
@@ -50,22 +56,41 @@ export function PropertiesTable(props) {
               setProperty={setProperty}
             />
           ))}
+
+          {/* {customProperties.map((property) => (
+            <NewParameter
+              key={property}
+              name={property}
+              config={properties[property]}
+              isRequired={requiredProperties && requiredProperties.includes(property)}
+              setProperty={setProperty}
+            />
+          ))} */}
         </TableBody>
       </Table>
+
+      {isExtensible &&
+        <Button sx={{margin: 1}}>Add property</Button>
+      }
     </TableContainer>
   );
 }
 
 export function NewParameter(props) {
+  // TODO Allow property name to be set
   const { name, config, isRequired, setProperty } = props;
+
+  // TODO Add description or title (if there is one) as tooltip
 
   return (
     <TableRow>
-      <TableCell sx={{fontFamily: 'monospace'}}>
-        {name}
-        {isRequired &&
-          <sup>*</sup>
-        }
+      <TableCell>
+        <Typography variant='body2' sx={{fontFamily: 'monospace'}}>
+          {name}
+          {isRequired &&
+            <sup>*</sup>
+          }
+        </Typography>
       </TableCell>
       <TableCell>
         <ParameterInput
@@ -207,11 +232,11 @@ export function ParameterInput(props) {
       console.log('unknown input:', resolvedConfig);
       setInputElement(<Typography>unknown</Typography>);
     }
-  }, [resolvedConfig, isRequired, value, setValue, setInputElement]);
+  }, [name, resolvedConfig, isRequired, value, setValue, setInputElement]);
 
   React.useEffect(() => {
     setProperty(value);
-  }, [value]);
+  }, [value, setProperty]);
 
   return inputElement;
 }
@@ -232,12 +257,12 @@ export function NumberInput(props) {
     helperText = 'Max: ' + maximum;
   }
 
-  const numberValid = (value) => {
+  const numberValid = React.useCallback((value) => {
     if (value === null || value.length === 0) {
       return true;
     }
 
-    if (/^\d*\.?\d+$/.test(value)) {
+    if (/^\-?\d*\.?\d+$/.test(value)) {
       if (minimum !== undefined && value < minimum) {
         return false;
       }
@@ -250,7 +275,7 @@ export function NumberInput(props) {
     }
 
     return false;
-  };
+  }, [maximum, minimum]);
 
   React.useEffect(() => {
     if (multiline) {
@@ -266,7 +291,7 @@ export function NumberInput(props) {
         setValue(Number(inputValue));
       }
     }
-  }, [inputValue]);
+  }, [inputValue, multiline, numberValid, setValue]);
 
   return (
     <TextField
@@ -303,7 +328,7 @@ export function StringInput(props) {
 
   const [inputValue, setInputValue] = React.useState(defaultValue || null);
 
-  const stringValid = (value) => {
+  const stringValid = React.useCallback((value) => {
     if (value === null || value.length === 0) {
       return true;
     }
@@ -317,7 +342,7 @@ export function StringInput(props) {
     }
 
     return true;
-  };
+  }, [pattern]);
 
   React.useEffect(() => {
     if (stringValid(inputValue)) {
@@ -325,7 +350,7 @@ export function StringInput(props) {
     } else {
       setValue(null);
     }
-  }, [inputValue]);
+  }, [inputValue, setValue, stringValid]);
 
   return (
     choices ? (
@@ -370,52 +395,43 @@ export function ObjectInput(props) {
   // TODO Handle patternProperties
 
   return (
-    config.properties ? (
-      <React.Fragment>
-        <Button onClick={() => setOpen(true)}>Configure</Button>
-        <ObjectDialog
-          title={'Configure ' + title}
-          properties={config.properties}
-          requiredProperties={config.required}
-          setProperties={(name, value) => {
-            setValue((previousValue) => {
-              if (previousValue === null) {
-                if (value === null) {
-                  return previousValue;
-                }
-
-                previousValue = {};
-              }
-
+    <React.Fragment>
+      <Button onClick={() => setOpen(true)}>Configure</Button>
+      <ObjectDialog
+        title={'Configure ' + title}
+        properties={config?.properties}
+        requiredProperties={config?.required}
+        setProperties={(name, value) => {
+          setValue((previousValue) => {
+            if (previousValue === null) {
               if (value === null) {
-                if (Object.keys(previousValue).includes(name)) {
-                  delete previousValue[name];
-                }
-              } else {
-                previousValue[name] = value;
+                return previousValue;
               }
 
-              return {...previousValue};
-            });
-          }}
-          open={open}
-          onClose={() => setOpen(false)}
-        />
-      </React.Fragment>
-    ) : (
-      // TODO Free-form objects should probably have a large text field that accepts (sanitized) YAML or JSON
-      <StringInput
-        choices={config?.enum}
-        pattern={config?.pattern}
-        isRequired={isRequired}
-        setValue={setValue}
+              previousValue = {};
+            }
+
+            if (value === null) {
+              if (Object.keys(previousValue).includes(name)) {
+                delete previousValue[name];
+              }
+            } else {
+              previousValue[name] = value;
+            }
+
+            return {...previousValue};
+          });
+        }}
+        open={open}
+        onClose={() => setOpen(false)}
+        isExtensible={config.properties ? false : true}
       />
-    )
+    </React.Fragment>
   );
 }
 
 export function ObjectDialog(props) {
-  const {title, properties, requiredProperties, setProperties, open, onClose} = props;
+  const {title, properties, requiredProperties, setProperties, open, onClose, isExtensible} = props;
 
   return (
     <Dialog onClose={onClose} open={open} fullWidth maxWidth='sm'>
@@ -425,6 +441,7 @@ export function ObjectDialog(props) {
           properties={properties}
           requiredProperties={requiredProperties}
           setProperty={setProperties}
+          isExtensible={isExtensible}
         />
       </DialogContent>
       <DialogActions>

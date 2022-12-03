@@ -173,7 +173,7 @@ export function NewService(props) {
 
   React.useEffect(() => {
     setSelectedService(service);
-  }, [service]);
+  }, [service, setSelectedService]);
 
   return (
     <React.Fragment>
@@ -224,7 +224,7 @@ export function NewService(props) {
               );
             })}
             {Object.values(service)[0].actions.at(-1) !== null &&
-              <Button onClick={() => addActionOrFilter('action')}>
+              <Button sx={{margin: 1}} onClick={() => addActionOrFilter('action')}>
                 Add another action
               </Button>
             }
@@ -248,7 +248,7 @@ export function NewService(props) {
               );
             })}
             {Object.values(service)[0].filters.at(-1) !== null &&
-              <Button onClick={() => addActionOrFilter('filter')}>
+              <Button sx={{margin: 1}} onClick={() => addActionOrFilter('filter')}>
                 Add another filter
               </Button>
             }
@@ -271,7 +271,7 @@ export function NewActionOrFilter(props) {
 
   React.useEffect(() => {
     setSelectedActionOrFilter(actionOrFilter);
-  }, [actionOrFilter]);
+  }, [actionOrFilter, setSelectedActionOrFilter]);
 
   const setProperty = (property, value) => {
     setActionOrFilter((previous) => {
