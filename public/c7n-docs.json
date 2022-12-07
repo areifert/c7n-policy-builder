@@ -39,13 +39,21 @@
       }
     },
     "filters": {
+      "access-analyzer": {
+        "doc": "Check for access analyzers in an account\n\nPermissions - access-analyzer:ListAnalyzers",
+        "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-access-analyzer"
+      },
       "check-cloudtrail": {
-        "doc": "Verify cloud trail enabled for this account per specifications.\nReturns an annotated account resource if trail is not enabled.\nOf particular note, the current-region option will evaluate whether cloudtrail is available\nin the current region, either as a multi region trail or as a trail with it as the home region.\n\nPermissions - cloudtrail:DescribeTrails, cloudtrail:GetTrailStatus",
+        "doc": "Verify cloud trail enabled for this account per specifications.\nReturns an annotated account resource if trail is not enabled.\nOf particular note, the current-region option will evaluate whether cloudtrail is available\nin the current region, either as a multi region trail or as a trail with it as the home region.\nThe log-metric-filter-pattern option checks for the existence of a cloudwatch alarm and a\ncorresponding SNS subscription for a specific filter pattern\n\nPermissions - cloudtrail:DescribeTrails, cloudtrail:GetTrailStatus, cloudtrail:GetEventSelectors, cloudwatch:DescribeAlarmsForMetric, logs:DescribeMetricFilters, sns:ListSubscriptions",
         "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-check-cloudtrail"
       },
       "check-config": {
         "doc": "Is config service enabled for this account\n\nPermissions - config:DescribeDeliveryChannels, config:DescribeConfigurationRecorders, config:DescribeConfigurationRecorderStatus",
         "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-check-config"
+      },
+      "check-macie": {
+        "doc": "Check status of macie v2 in the account.\nGets the macie session info for the account, and\nthe macie master account for the current account if\nconfigured.\nPermissions - macie2:GetMacieSession, macie2:GetMasterAccount",
+        "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-check-macie"
       },
       "credential": {
         "doc": "Use IAM Credential report to filter users.\nThe IAM Credential report aggregates multiple pieces of\ninformation on iam users. This makes it highly efficient for\nquerying multiple aspects of a user that would otherwise require\nper user api calls.\nhttps://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html\nFor example if we wanted to retrieve all users with mfa who have\nnever used their password but have active access keys from the\nlast month\nCredential Report Transforms\nWe perform some default transformations from the raw\ncredential report. Sub-objects (access_key_1, cert_2)\nare turned into array of dictionaries for matching\npurposes with their common prefixes stripped.\nN/A values are turned into None, TRUE/FALSE are turned\ninto boolean values.\nPermissions - iam:GenerateCredentialReport, iam:GetCredentialReport",
@@ -74,6 +82,10 @@
       "iam-summary": {
         "doc": "Return annotated account resource if iam summary filter matches.\nSome use cases include, detecting root api keys or mfa usage.\nExample iam summary wrt to matchable fields:\nFor example to determine if an account has either not been\nenabled with root mfa or has root api keys.\nPermissions - iam:GetAccountSummary",
         "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-iam-summary"
+      },
+      "lakeformation-s3-cross-account": {
+        "doc": "Flags an account if its using a lakeformation s3 bucket resource from a different account.\n\nPermissions - lakeformation:ListResources",
+        "link": "https://cloudcustodian.io/docs/aws/resources/account.html#aws-account-filters-lakeformation-s3-cross-account"
       },
       "missing": {
         "doc": "Assert the absence of a particular resource.\nIntended for use at a logical account/subscription/project level\nThis works as an effectively an embedded policy thats evaluated.",
@@ -114,6 +126,15 @@
     },
     "filters": {}
   },
+  "aws.airflow": {
+    "actions": {},
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a Managed Workflow for Apache Airflow environment by its associcated kms key\nand optionally the aliasname of the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/airflow.html#aws-airflow-filters-kms-key"
+      }
+    }
+  },
   "aws.alarm": {
     "actions": {
       "delete": {
@@ -134,7 +155,7 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/ami.html#aws-ami-actions-deregister"
       },
       "remove-launch-permissions": {
-        "doc": "Action to remove the ability to launch an instance from an AMI\nThis action will remove any launch permissions granted to other\nAWS accounts from the image, leaving only the owner capable of\nlaunching it\n\nPermissions - ec2:ResetImageAttribute, ec2:ModifyImageAttribute",
+        "doc": "Action to remove the ability to launch an instance from an AMI\nDEPRECATED - use set-permissions instead to support AWS Organizations\nsharing as well as adding permissions\nThis action will remove any launch permissions granted to other\nAWS accounts from the image, leaving only the owner capable of\nlaunching it\n\nPermissions - ec2:ResetImageAttribute, ec2:ModifyImageAttribute",
         "link": "https://cloudcustodian.io/docs/aws/resources/ami.html#aws-ami-actions-remove-launch-permissions"
       }
     },
@@ -153,11 +174,28 @@
       }
     }
   },
+  "aws.apigw-domain-name": {
+    "actions": {
+      "update-security": {
+        "doc": "Parent base class for filters and actions.\nPermissions - apigateway:PATCH",
+        "link": "https://cloudcustodian.io/docs/aws/resources/apigw-domain-name.html#aws-apigw-domain-name-actions-update-security"
+      }
+    },
+    "filters": {}
+  },
+  "aws.apigwv2": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.app-elb": {
     "actions": {
       "delete": {
         "doc": "Action to delete an ELB\nTo avoid unwanted deletions of ELB, it is recommended to apply a filter\nto the rule\n\nPermissions - elasticloadbalancing:DeleteLoadBalancer, elasticloadbalancing:ModifyLoadBalancerAttributes",
         "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-actions-delete"
+      },
+      "modify-attributes": {
+        "doc": "Modify load balancer attributes.\n\nPermissions - elasticloadbalancing:ModifyLoadBalancerAttributes",
+        "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-actions-modify-attributes"
       },
       "modify-listener": {
         "doc": "Action to modify the policy for an App ELB\n\nPermissions - elasticloadbalancing:ModifyListener",
@@ -174,6 +212,10 @@
       "set-waf": {
         "doc": "Enable wafv2 protection on Application LoadBalancer.\n\nPermissions - waf-regional:AssociateWebACL, waf-regional:ListWebACLs",
         "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-actions-set-waf"
+      },
+      "set-wafv2": {
+        "doc": "Enable wafv2 protection on Application LoadBalancer.\nSupports regex expression for web-acl\n\nPermissions - wafv2:AssociateWebACL, wafv2:DisassociateWebACL, wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-actions-set-wafv2"
       }
     },
     "filters": {
@@ -212,6 +254,10 @@
       "waf-enabled": {
         "doc": "Filter Application LoadBalancer by waf-regional web-acl\n\nPermissions - waf-regional:ListResourcesForWebACL, waf-regional:ListWebACLs",
         "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-filters-waf-enabled"
+      },
+      "wafv2-enabled": {
+        "doc": "Filter Application LoadBalancer by wafv2 web-acl\nSupports regex expression for web-acl.\nFirewall Manager pushed WebACL\u00e2\u0080\u0099s name varies by account and region.\nRegex expression can support both local and Firewall Managed WebACL.\n\nPermissions - wafv2:ListResourcesForWebACL, wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/app-elb.html#aws-app-elb-filters-wafv2-enabled"
       }
     }
   },
@@ -229,8 +275,49 @@
       }
     }
   },
+  "aws.app-flow": {
+    "actions": {
+      "delete": {
+        "doc": "Action to delete an AppFlow\nThe \u00e2\u0080\u0098force\u00e2\u0080\u0099 parameter is needed when deleting an AppFlow that is currently\nin use.\n\nPermissions - appflow:DeleteFlow",
+        "link": "https://cloudcustodian.io/docs/aws/resources/app-flow.html#aws-app-flow-actions-delete"
+      }
+    },
+    "filters": {}
+  },
+  "aws.artifact-domain": {
+    "actions": {
+      "delete": {
+        "doc": "\nDelete empty domains older than 30 days.\nPermissions - codeartifact:DeleteDomain, codeartifact:DeleteRepository, codeartifact:ListRepositoriesInDomain",
+        "link": "https://cloudcustodian.io/docs/aws/resources/artifact-domain.html#aws-artifact-domain-actions-delete"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - codeartifact:GetDomainPermissionsPolicy",
+        "link": "https://cloudcustodian.io/docs/aws/resources/artifact-domain.html#aws-artifact-domain-filters-cross-account"
+      }
+    }
+  },
+  "aws.artifact-repo": {
+    "actions": {
+      "delete": {
+        "doc": "Delete a repository\n\nPermissions - codeartifact:DeleteRepository",
+        "link": "https://cloudcustodian.io/docs/aws/resources/artifact-repo.html#aws-artifact-repo-actions-delete"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - codeartifact:GetRepositoryPermissionsPolicy",
+        "link": "https://cloudcustodian.io/docs/aws/resources/artifact-repo.html#aws-artifact-repo-filters-cross-account"
+      }
+    }
+  },
   "aws.asg": {
     "actions": {
+      "auto-tag-user": {
+        "doc": "Tag a resource with the user who created/modified it.\nThere\u00e2\u0080\u0099s a number of caveats to usage. Resources which don\u00e2\u0080\u0099t\ninclude tagging as part of their api may have some delay before\nautomation kicks in to create a tag. Real world delay may be several\nminutes, with worst case into hours[0]. This creates a race condition\nbetween auto tagging and automation.\nIn practice this window is on the order of a fraction of a second, as\nwe fetch the resource and evaluate the presence of the tag before\nattempting to tag it.\nReferences\n\nPermissions - autoscaling:CreateOrUpdateTags",
+        "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-actions-auto-tag-user"
+      },
       "delete": {
         "doc": "Action to delete an ASG\nThe \u00e2\u0080\u0098force\u00e2\u0080\u0099 parameter is needed when deleting an ASG that has instances\nattached to it.\n\nPermissions - autoscaling:DeleteAutoScalingGroup",
         "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-actions-delete"
@@ -266,6 +353,10 @@
       "tag": {
         "doc": "Action to add a tag to an ASG\n\n\nPermissions - autoscaling:CreateOrUpdateTags",
         "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-actions-tag"
+      },
+      "update": {
+        "doc": "Action to update ASG configuration settings\n\nPermissions - autoscaling:UpdateAutoScalingGroup",
+        "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-actions-update"
       }
     },
     "filters": {
@@ -292,6 +383,10 @@
       "progagated-tags": {
         "doc": "Filter ASG based on propagated tags\nThis filter is designed to find all autoscaling groups that have a list\nof tag keys (provided) that are set to propagate to new instances. Using\nthis will allow for easy validation of asg tag sets are in place across an\naccount for compliance.\nPermissions - autoscaling:DescribeLaunchConfigurations, autoscaling:DescribeAutoScalingGroups",
         "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-filters-progagated-tags"
+      },
+      "scaling-policy": {
+        "doc": "Filter asg by scaling-policies attributes.\n\nPermissions - autoscaling:DescribePolicies",
+        "link": "https://cloudcustodian.io/docs/aws/resources/asg.html#aws-asg-filters-scaling-policy"
       },
       "user-data": {
         "doc": "Filter on ASG\u00e2\u0080\u0099s whose launch configs have matching userdata.\nNote: It is highly recommended to use regexes with the ?sm flags, since Custodian\nuses re.match() and userdata spans multiple lines.\n\nPermissions - autoscaling:DescribeAutoScalingGroups",
@@ -342,6 +437,10 @@
     },
     "filters": {}
   },
+  "aws.batch-queue": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.cache-cluster": {
     "actions": {
       "delete": {
@@ -377,6 +476,28 @@
     "actions": {},
     "filters": {}
   },
+  "aws.catalog-portfolio": {
+    "actions": {
+      "delete": {
+        "doc": "Action to delete a Service Catalog Portfolio\n\nPermissions - servicecatalog:DeletePortfolio",
+        "link": "https://cloudcustodian.io/docs/aws/resources/catalog-portfolio.html#aws-catalog-portfolio-actions-delete"
+      },
+      "remove-shared-accounts": {
+        "doc": "Action to delete Portfolio share with other accounts\n\nPermissions - servicecatalog:DeletePortfolioShare",
+        "link": "https://cloudcustodian.io/docs/aws/resources/catalog-portfolio.html#aws-catalog-portfolio-actions-remove-shared-accounts"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Check for account ids that the service catalog portfolio is shared with\n\nPermissions - servicecatalog:ListPortfolioAccess",
+        "link": "https://cloudcustodian.io/docs/aws/resources/catalog-portfolio.html#aws-catalog-portfolio-filters-cross-account"
+      }
+    }
+  },
+  "aws.catalog-product": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.cfn": {
     "actions": {
       "delete": {
@@ -395,7 +516,12 @@
     "filters": {}
   },
   "aws.cloudhsm-cluster": {
-    "actions": {},
+    "actions": {
+      "delete": {
+        "doc": "Parent base class for filters and actions.\nPermissions - cloudhsm:DeleteCluster",
+        "link": "https://cloudcustodian.io/docs/aws/resources/cloudhsm-cluster.html#aws-cloudhsm-cluster-actions-delete"
+      }
+    },
     "filters": {}
   },
   "aws.cloudsearch": {
@@ -403,6 +529,10 @@
       "delete": {
         "doc": "Parent base class for filters and actions.\nPermissions - cloudsearch:DeleteDomain",
         "link": "https://cloudcustodian.io/docs/aws/resources/cloudsearch.html#aws-cloudsearch-actions-delete"
+      },
+      "enable-https": {
+        "doc": "Enable HTTPs to cloudsearch\n\nPermissions - cloudsearch:UpdateDomainEndpointOptions",
+        "link": "https://cloudcustodian.io/docs/aws/resources/cloudsearch.html#aws-cloudsearch-actions-enable-https"
       }
     },
     "filters": {}
@@ -423,6 +553,10 @@
       }
     },
     "filters": {
+      "event-selectors": {
+        "doc": "Filter a cloudtrail by its related Event Selectors.\n\nPermissions - cloudtrail:GetEventSelectors",
+        "link": "https://cloudcustodian.io/docs/aws/resources/cloudtrail.html#aws-cloudtrail-filters-event-selectors"
+      },
       "is-shadow": {
         "doc": "Identify shadow trails (secondary copies), shadow trails\ncan\u00e2\u0080\u0099t be modified directly, the origin trail needs to be modified.\nShadow trails are created for multi-region trails as well for\norganizational trails.\nPermissions - cloudtrail:DescribeTrails",
         "link": "https://cloudcustodian.io/docs/aws/resources/cloudtrail.html#aws-cloudtrail-filters-is-shadow"
@@ -451,6 +585,28 @@
     },
     "filters": {}
   },
+  "aws.codedeploy-app": {
+    "actions": {
+      "delete": {
+        "doc": "Parent base class for filters and actions.\nPermissions - codedeploy:DeleteApplication",
+        "link": "https://cloudcustodian.io/docs/aws/resources/codedeploy-app.html#aws-codedeploy-app-actions-delete"
+      }
+    },
+    "filters": {}
+  },
+  "aws.codedeploy-deployment": {
+    "actions": {},
+    "filters": {}
+  },
+  "aws.codedeploy-group": {
+    "actions": {
+      "delete": {
+        "doc": "Delete a deployment group tied to an application.\nPermissions - codedeploy:DeleteDeploymentGroup",
+        "link": "https://cloudcustodian.io/docs/aws/resources/codedeploy-group.html#aws-codedeploy-group-actions-delete"
+      }
+    },
+    "filters": {}
+  },
   "aws.codepipeline": {
     "actions": {
       "delete": {
@@ -462,7 +618,12 @@
   },
   "aws.config-recorder": {
     "actions": {},
-    "filters": {}
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - config:DescribeAggregationAuthorizations",
+        "link": "https://cloudcustodian.io/docs/aws/resources/config-recorder.html#aws-config-recorder-filters-cross-account"
+      }
+    }
   },
   "aws.config-rule": {
     "actions": {
@@ -478,9 +639,27 @@
       }
     }
   },
+  "aws.connect-instance": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.customer-gateway": {
     "actions": {},
     "filters": {}
+  },
+  "aws.datalake-location": {
+    "actions": {
+      "deregister": {
+        "doc": "Parent base class for filters and actions.\nPermissions - lakeformation:DeregisterResource",
+        "link": "https://cloudcustodian.io/docs/aws/resources/datalake-location.html#aws-datalake-location-actions-deregister"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Flags all registered datalake locations if it\u00e2\u0080\u0099s cross account.\n\nPermissions - lakeformation:ListResources",
+        "link": "https://cloudcustodian.io/docs/aws/resources/datalake-location.html#aws-datalake-location-filters-cross-account"
+      }
+    }
   },
   "aws.datapipeline": {
     "actions": {
@@ -533,6 +712,10 @@
       "set-waf": {
         "doc": "Enable waf protection on CloudFront distribution.\n\nPermissions - cloudfront:UpdateDistribution, waf:ListWebACLs",
         "link": "https://cloudcustodian.io/docs/aws/resources/distribution.html#aws-distribution-actions-set-waf"
+      },
+      "set-wafv2": {
+        "doc": "Enable wafv2 protection on CloudFront distribution.\n\nPermissions - cloudfront:UpdateDistribution, wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/distribution.html#aws-distribution-actions-set-wafv2"
       }
     },
     "filters": {
@@ -551,6 +734,10 @@
       "waf-enabled": {
         "doc": "Filter CloudFront distribution by waf-regional web-acl\n\nPermissions - waf:ListWebACLs",
         "link": "https://cloudcustodian.io/docs/aws/resources/distribution.html#aws-distribution-filters-waf-enabled"
+      },
+      "wafv2-enabled": {
+        "doc": "Filter CloudFront distribution by wafv2 web-acl\n\nPermissions - wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/distribution.html#aws-distribution-filters-wafv2-enabled"
       }
     }
   },
@@ -622,6 +809,10 @@
       }
     },
     "filters": {
+      "consecutive-backups": {
+        "doc": "Returns tables where number of consective daily backups is\nequal to/or greater than n days.\n\nPermissions - dynamodb:ListBackups, dynamodb:DescribeBackup, dynamodb:DescribeTable",
+        "link": "https://cloudcustodian.io/docs/aws/resources/dynamodb-table.html#aws-dynamodb-table-filters-consecutive-backups"
+      },
       "continuous-backup": {
         "doc": "Check for continuous backups and point in time recovery (PITR) on a dynamodb table.\n\nPermissions - dynamodb:DescribeContinuousBackups",
         "link": "https://cloudcustodian.io/docs/aws/resources/dynamodb-table.html#aws-dynamodb-table-filters-continuous-backup"
@@ -691,6 +882,10 @@
       "delete": {
         "doc": "Deletes EBS snapshots\n\nPermissions - ec2:DeleteSnapshot",
         "link": "https://cloudcustodian.io/docs/aws/resources/ebs-snapshot.html#aws-ebs-snapshot-actions-delete"
+      },
+      "set-permissions": {
+        "doc": "Action to set permissions for creating volumes from a snapshot\nUse the \u00e2\u0080\u0098add\u00e2\u0080\u0099 and \u00e2\u0080\u0098remove\u00e2\u0080\u0099 parameters to control which accounts to\nadd or remove respectively.  The default is to remove any create\nvolume permissions granted to other AWS accounts.\nCombining this action with the \u00e2\u0080\u0098cross-account\u00e2\u0080\u0099 filter allows you\ngreater control over which accounts will be removed, e.g. using a\nwhitelist:\n\nPermissions - ec2:ModifySnapshotAttribute",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ebs-snapshot.html#aws-ebs-snapshot-actions-set-permissions"
       }
     },
     "filters": {
@@ -709,6 +904,10 @@
       "unused": {
         "doc": "Filters snapshots based on usage\ntrue: snapshot is not used by launch-template, launch-config, or ami.\nfalse: snapshot is being used by launch-template, launch-config, or ami.\n\nPermissions - autoscaling:DescribeAutoScalingGroups, autoscaling:DescribeLaunchConfigurations, ec2:DescribeImages",
         "link": "https://cloudcustodian.io/docs/aws/resources/ebs-snapshot.html#aws-ebs-snapshot-filters-unused"
+      },
+      "volume": {
+        "doc": "Filter EBS snapshots by their volume attributes.\nPermissions - ec2:DescribeVolumes",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ebs-snapshot.html#aws-ebs-snapshot-filters-volume"
       }
     }
   },
@@ -820,6 +1019,10 @@
         "doc": "Age an instance has been in the given state.",
         "link": "https://cloudcustodian.io/docs/aws/resources/ec2.html#aws-ec2-filters-state-age"
       },
+      "stop-protected": {
+        "doc": "\n\n\n\nPermissions - ec2:DescribeInstanceAttribute",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ec2.html#aws-ec2-filters-stop-protected"
+      },
       "termination-protected": {
         "doc": "\n\n\n\nPermissions - ec2:DescribeInstanceAttribute",
         "link": "https://cloudcustodian.io/docs/aws/resources/ec2.html#aws-ec2-filters-termination-protected"
@@ -830,8 +1033,21 @@
       }
     }
   },
+  "aws.ec2-host": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.ec2-reserved": {
     "actions": {},
+    "filters": {}
+  },
+  "aws.ec2-spot-fleet-request": {
+    "actions": {
+      "resize": {
+        "doc": "Action to resize the min/max/desired count in an application autoscaling target\nThere are several ways to use this action:\napply a fixed resize of min, max or desired, optionally saving the\nprevious values to a named tag (for restoring later):\nrestore previous values for min/max/desired from a tag:\nPermissions - ec2:CreateTags, ec2:ModifySpotFleetRequest",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ec2-spot-fleet-request.html#aws-ec2-spot-fleet-request-actions-resize"
+      }
+    },
     "filters": {}
   },
   "aws.ecr": {
@@ -864,6 +1080,10 @@
       }
     }
   },
+  "aws.ecr-image": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.ecs": {
     "actions": {},
     "filters": {}
@@ -895,6 +1115,10 @@
       "modify": {
         "doc": "Action to update service\n\nPermissions - ecs:UpdateService",
         "link": "https://cloudcustodian.io/docs/aws/resources/ecs-service.html#aws-ecs-service-actions-modify"
+      },
+      "resize": {
+        "doc": "Action to resize the min/max/desired count in an application autoscaling target\nThere are several ways to use this action:\napply a fixed resize of min, max or desired, optionally saving the\nprevious values to a named tag (for restoring later):\nrestore previous values for min/max/desired from a tag:\nPermissions - ecs:UpdateService, ecs:TagResource, ecs:UntagResource",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ecs-service.html#aws-ecs-service-actions-resize"
       }
     },
     "filters": {
@@ -947,6 +1171,10 @@
       }
     },
     "filters": {
+      "check-secure-transport": {
+        "doc": "Find EFS that does not enforce secure transport\n\nTo configure an EFS to enforce secure transport, set up the appropriate\nEffect and Condition for its policy document. For example:\nPermissions - elasticfilesystem:DescribeFileSystemPolicy",
+        "link": "https://cloudcustodian.io/docs/aws/resources/efs.html#aws-efs-filters-check-secure-transport"
+      },
       "kms-key": {
         "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
         "link": "https://cloudcustodian.io/docs/aws/resources/efs.html#aws-efs-filters-kms-key"
@@ -970,6 +1198,20 @@
       "update-config": {
         "doc": "Parent base class for filters and actions.\nPermissions - eks:UpdateClusterConfig",
         "link": "https://cloudcustodian.io/docs/aws/resources/eks.html#aws-eks-actions-update-config"
+      }
+    },
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/eks.html#aws-eks-filters-kms-key"
+      }
+    }
+  },
+  "aws.eks-nodegroup": {
+    "actions": {
+      "delete": {
+        "doc": "Delete node group(s).\nPermissions - eks:DeleteNodegroup",
+        "link": "https://cloudcustodian.io/docs/aws/resources/eks-nodegroup.html#aws-eks-nodegroup-actions-delete"
       }
     },
     "filters": {}
@@ -1024,9 +1266,42 @@
       "delete": {
         "doc": "Parent base class for filters and actions.\nPermissions - es:DeleteElasticsearchDomain",
         "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-actions-delete"
+      },
+      "remove-matched-source-ips": {
+        "doc": "Action to remove matched source ips from a Access Policy. This action\nneeds to be used in conjunction with the source-ip filter. It can be used\nfor removing non-approved IP addresses from the the access policy of a\nElasticSearch domain.\n\nPermissions - es:UpdateElasticsearchDomainConfig",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-actions-remove-matched-source-ips"
+      },
+      "remove-statements": {
+        "doc": "Action to remove policy statements from elasticsearch\n\nPermissions - es:DescribeElasticsearchDomainConfig, es:UpdateElasticsearchDomainConfig",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-actions-remove-statements"
+      },
+      "update-tls-config": {
+        "doc": "Action to update tls-config on a domain endpoint\n\nPermissions - es:UpdateElasticsearchDomainConfig, es:ListDomainNames",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-actions-update-tls-config"
       }
     },
-    "filters": {}
+    "filters": {
+      "cross-account": {
+        "doc": "Filter to return all elasticsearch domains with cross account access permissions\n\nPermissions - es:DescribeElasticsearchDomainConfig",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-filters-cross-account"
+      },
+      "cross-cluster": {
+        "doc": "Filter to return all elasticsearch domains with inbound cross-cluster with the given info\n\nPermissions - es:ESCrossClusterGet",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-filters-cross-cluster"
+      },
+      "has-statement": {
+        "doc": "Find resources with matching access policy statements.\n:example:\n.. code-block:: yaml\nname: sns-check-statement-id\nresource: sns\nfilters:\ntype: has-statement\nstatement_ids:\nBlockNonSSL\nname: sns-check-block-non-ssl\nresource: sns\nfilters:\ntype: has-statement\nstatements:\nEffect: Deny\nAction: \u00e2\u0080\u0098SNS:Publish\u00e2\u0080\u0099\nPrincipal: \u00e2\u0080\u0098*\u00e2\u0080\u0099\nCondition:\n\u00e2\u0080\u009caws:SecureTransport\u00e2\u0080\u009d: \u00e2\u0080\u009cfalse\u00e2\u0080\u009d",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-filters-has-statement"
+      },
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-filters-kms-key"
+      },
+      "source-ip": {
+        "doc": "ValueFilter-based filter for verifying allowed source ips in\nan ElasticSearch domain\u00e2\u0080\u0099s access policy. Useful for checking to see if\nan ElasticSearch domain allows traffic from non approved IP addresses/CIDRs.\n\nFind ElasticSearch domains that allow traffic from IP addresses\nnot in the approved list (string matching)\n.. code-block: yaml\ntype: source-ip\nop: not-in\nvalue: [\u00e2\u0080\u009c103.15.250.0/24\u00e2\u0080\u009d, \u00e2\u0080\u009c173.240.160.0/21\u00e2\u0080\u009d, \u00e2\u0080\u009c206.108.40.0/21\u00e2\u0080\u009d]\nSame  as above but using cidr matching instead of string matching\n.. code-block: yaml\ntype: source-ip\nop: not-in\nvalue_type: cidr\nvalue: [\u00e2\u0080\u009c103.15.250.0/24\u00e2\u0080\u009d, \u00e2\u0080\u009c173.240.160.0/21\u00e2\u0080\u009d, \u00e2\u0080\u009c206.108.40.0/21\u00e2\u0080\u009d]\nPermissions - es:DescribeElasticsearchDomainConfig",
+        "link": "https://cloudcustodian.io/docs/aws/resources/elasticsearch.html#aws-elasticsearch-filters-source-ip"
+      }
+    }
   },
   "aws.elasticsearch-reserved": {
     "actions": {},
@@ -1130,9 +1405,32 @@
       }
     }
   },
-  "aws.event-rule": {
+  "aws.event-bus": {
     "actions": {},
-    "filters": {}
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - events:ListEventBuses",
+        "link": "https://cloudcustodian.io/docs/aws/resources/event-bus.html#aws-event-bus-filters-cross-account"
+      }
+    }
+  },
+  "aws.event-rule": {
+    "actions": {
+      "delete": {
+        "doc": "\n\nPermissions - events:DeleteRule, events:RemoveTargets, events:ListTargetsByRule",
+        "link": "https://cloudcustodian.io/docs/aws/resources/event-rule.html#aws-event-rule-actions-delete"
+      }
+    },
+    "filters": {
+      "event-rule-target": {
+        "doc": "Filter event rules by their targets\n\nPermissions - events:ListTargetsByRule",
+        "link": "https://cloudcustodian.io/docs/aws/resources/event-rule.html#aws-event-rule-filters-event-rule-target"
+      },
+      "invalid-targets": {
+        "doc": "\n\nPermissions - events:ListTargetsByRule",
+        "link": "https://cloudcustodian.io/docs/aws/resources/event-rule.html#aws-event-rule-filters-invalid-targets"
+      }
+    }
   },
   "aws.event-rule-target": {
     "actions": {
@@ -1166,6 +1464,19 @@
       }
     }
   },
+  "aws.firewall": {
+    "actions": {},
+    "filters": {}
+  },
+  "aws.fis-template": {
+    "actions": {
+      "delete": {
+        "doc": "Parent base class for filters and actions.\nPermissions - fis:DeleteExperimentTemplate",
+        "link": "https://cloudcustodian.io/docs/aws/resources/fis-template.html#aws-fis-template-actions-delete"
+      }
+    },
+    "filters": {}
+  },
   "aws.fsx": {
     "actions": {
       "backup": {
@@ -1182,6 +1493,10 @@
       }
     },
     "filters": {
+      "consecutive-backups": {
+        "doc": "Returns consecutive daily FSx backups, which are equal to/or greater than n days.\n:Example:\n.. code-block:: yaml\nname: fsx-daily-backup-count\nresource: fsx\nfilters:\ntype: consecutive-backups\ndays: 5\nnotify\nPermissions - fsx:DescribeBackups, fsx:DescribeVolumes",
+        "link": "https://cloudcustodian.io/docs/aws/resources/fsx.html#aws-fsx-filters-consecutive-backups"
+      },
       "kms-key": {
         "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
         "link": "https://cloudcustodian.io/docs/aws/resources/fsx.html#aws-fsx-filters-kms-key"
@@ -1310,6 +1625,10 @@
       "delete": {
         "doc": "Parent base class for filters and actions.\nPermissions - glue:DeleteJob",
         "link": "https://cloudcustodian.io/docs/aws/resources/glue-job.html#aws-glue-job-actions-delete"
+      },
+      "toggle-metrics": {
+        "doc": "Enable or disable CloudWatch metrics for a Glue job\n\nPermissions - glue:UpdateJob",
+        "link": "https://cloudcustodian.io/docs/aws/resources/glue-job.html#aws-glue-job-actions-toggle-metrics"
       }
     },
     "filters": {
@@ -1374,6 +1693,20 @@
       }
     }
   },
+  "aws.graphql-api": {
+    "actions": {
+      "set-wafv2": {
+        "doc": "Enable wafv2 protection on AppSync graphqlApi.\n\nPermissions - wafv2:AssociateWebACL, wafv2:DisassociateWebACL, wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/graphql-api.html#aws-graphql-api-actions-set-wafv2"
+      }
+    },
+    "filters": {
+      "wafv2-enabled": {
+        "doc": "Filter AppSync GraphQLApi by wafv2 web-acl\n:example:\n.. code-block:: yaml\nname: filter-graphql-api-wafv2\nresource: graphql-api\nfilters:\ntype: wafv2-enabled\nstate: false\nweb-acl: test-waf-v2\nname: filter-graphql-api-wafv2-regex\nresource: graphql-api\nfilters:\ntype: wafv2-enabled\nstate: false\nweb-acl: .*FMManagedWebACLV2-?FMS-.*\nPermissions - wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/graphql-api.html#aws-graphql-api-filters-wafv2-enabled"
+      }
+    }
+  },
   "aws.health-event": {
     "actions": {},
     "filters": {}
@@ -1384,6 +1717,10 @@
   },
   "aws.hostedzone": {
     "actions": {
+      "delete": {
+        "doc": "Action to delete Route 53 hosted zones.\nIt is recommended to use a filter to avoid unwanted deletion of R53 hosted zones.\nIf set to force this action will wipe out all records in the hosted zone\nbefore deleting the zone.\n\nPermissions - route53:DeleteHostedZone",
+        "link": "https://cloudcustodian.io/docs/aws/resources/hostedzone.html#aws-hostedzone-actions-delete"
+      },
       "set-query-logging": {
         "doc": "Enables query logging on a hosted zone.\nBy default this enables a log group per route53 domain, alternatively\na log group name can be specified for a unified log across domains.\nNote this only applicable to public route53 domains, and log groups\nmust be created in us-east-1 region.\n\n\n\nPermissions - route53:GetQueryLoggingConfig, route53:CreateQueryLoggingConfig, route53:DeleteQueryLoggingConfig, logs:DescribeLogGroups, logs:CreateLogGroup, logs:GetResourcePolicy, logs:PutResourcePolicy",
         "link": "https://cloudcustodian.io/docs/aws/resources/hostedzone.html#aws-hostedzone-actions-set-query-logging"
@@ -1395,7 +1732,7 @@
     },
     "filters": {
       "query-logging-enabled": {
-        "doc": "Parent base class for filters and actions.\nPermissions - route53:GetQueryLoggingConfig, route53:GetHostedZone",
+        "doc": "Parent base class for filters and actions.\nPermissions - route53:GetQueryLoggingConfig, route53:GetHostedZone, logs:DescribeSubscriptionFilters",
         "link": "https://cloudcustodian.io/docs/aws/resources/hostedzone.html#aws-hostedzone-filters-query-logging-enabled"
       },
       "shield-enabled": {
@@ -1417,21 +1754,47 @@
     "filters": {}
   },
   "aws.iam-certificate": {
-    "actions": {},
+    "actions": {
+      "delete": {
+        "doc": "Delete an IAM Certificate\nFor example, if you want to automatically delete an unused IAM certificate.\nPermissions - iam:DeleteServerCertificate",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-certificate.html#aws-iam-certificate-actions-delete"
+      }
+    },
     "filters": {}
   },
   "aws.iam-group": {
-    "actions": {},
+    "actions": {
+      "delete": {
+        "doc": "Delete an IAM User Group.\nFor example, if you want to delete a group named \u00e2\u0080\u0098test\u00e2\u0080\u0099.\nPermissions - iam:DeleteGroup, iam:RemoveUserFromGroup",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-actions-delete"
+      },
+      "delete-inline-policies": {
+        "doc": "Delete inline policies embedded in an IAM group.\nPermissions - iam:ListGroupPolicies, iam:DeleteGroupPolicy",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-actions-delete-inline-policies"
+      },
+      "set-policy": {
+        "doc": "Set a specific IAM policy as attached or detached on a group.\nYou will identify the policy by its arn.\nReturns a list of roles modified by the action.\nFor example, if you want to automatically attach a single policy while\ndetaching all exisitng policies:\nPermissions - iam:AttachGroupPolicy, iam:DetachGroupPolicy, iam:ListAttachedGroupPolicies",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-actions-set-policy"
+      }
+    },
     "filters": {
       "has-inline-policy": {
         "doc": "Filter IAM groups that have an inline-policy based on boolean value:\nTrue: Filter all groups that have an inline-policy attached\nFalse: Filter all groups that do not have an inline-policy attached\n\nPermissions - iam:ListGroupPolicies",
         "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-filters-has-inline-policy"
+      },
+      "has-specific-managed-policy": {
+        "doc": "Filter IAM groups that have a specific policy attached\nFor example, if the user wants to check all groups with \u00e2\u0080\u0098admin-policy\u00e2\u0080\u0099:\n\nPermissions - iam:ListAttachedGroupPolicies",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-filters-has-specific-managed-policy"
       },
       "has-users": {
         "doc": "Filter IAM groups that have users attached based on True/False value:\nTrue: Filter all IAM groups with users assigned to it\nFalse: Filter all IAM groups without any users assigned to it\n\nPermissions - iam:GetGroup",
         "link": "https://cloudcustodian.io/docs/aws/resources/iam-group.html#aws-iam-group-filters-has-users"
       }
     }
+  },
+  "aws.iam-oidc-provider": {
+    "actions": {},
+    "filters": {}
   },
   "aws.iam-policy": {
     "actions": {
@@ -1510,11 +1873,19 @@
       }
     }
   },
+  "aws.iam-saml-provider": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.iam-user": {
     "actions": {
       "delete": {
         "doc": "Delete a user or properties of a user.\nFor example if you want to have a whitelist of valid (machine-)users\nand want to ensure that no users have been clicked without documentation.\n\nAdditionally, you can specify the options to delete properties of an iam-user,\nincluding console-access, access-keys, attached-user-policies,\ninline-user-policies, mfa-devices, groups,\nssh-keys, signing-certificates, and service-specific-credentials.\n\nPermissions - iam:ListAttachedUserPolicies, iam:ListAccessKeys, iam:ListGroupsForUser, iam:ListMFADevices, iam:ListServiceSpecificCredentials, iam:ListSigningCertificates, iam:ListSSHPublicKeys, iam:DeactivateMFADevice, iam:DeleteAccessKey, iam:DeleteLoginProfile, iam:DeleteSigningCertificate, iam:DeleteSSHPublicKey, iam:DeleteUser, iam:DeleteUserPolicy, iam:DetachUserPolicy, iam:RemoveUserFromGroup",
         "link": "https://cloudcustodian.io/docs/aws/resources/iam-user.html#aws-iam-user-actions-delete"
+      },
+      "delete-ssh-keys": {
+        "doc": "Delete or disable a user\u00e2\u0080\u0099s SSH keys.\nFor example to delete keys after 90 days:\nPermissions - iam:ListSSHPublicKeys, iam:UpdateSSHPublicKey, iam:DeleteSSHPublicKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-user.html#aws-iam-user-actions-delete-ssh-keys"
       },
       "remove-keys": {
         "doc": "Delete or disable user\u00e2\u0080\u0099s access keys.\nFor example if we wanted to disable keys after 90 days of non-use and\ndelete them after 180 days of nonuse:\nPermissions - iam:ListAccessKeys, iam:UpdateAccessKey, iam:DeleteAccessKey",
@@ -1553,6 +1924,10 @@
       "policy": {
         "doc": "Filter IAM users based on attached policy values\n\nPermissions - iam:ListAttachedUserPolicies",
         "link": "https://cloudcustodian.io/docs/aws/resources/iam-user.html#aws-iam-user-filters-policy"
+      },
+      "ssh-key": {
+        "doc": "Filter IAM users based on uploaded SSH public keys\n\nPermissions - iam:ListSSHPublicKeys",
+        "link": "https://cloudcustodian.io/docs/aws/resources/iam-user.html#aws-iam-user-filters-ssh-key"
       }
     }
   },
@@ -1561,6 +1936,19 @@
       "delete": {
         "doc": "Action to delete cognito identity pool\nIt is recommended to use a filter to avoid unwanted deletion of pools\n\nPermissions - cognito-identity:DeleteIdentityPool",
         "link": "https://cloudcustodian.io/docs/aws/resources/identity-pool.html#aws-identity-pool-actions-delete"
+      }
+    },
+    "filters": {}
+  },
+  "aws.insight-rule": {
+    "actions": {
+      "delete": {
+        "doc": "Delete a cloudwatch contributor insight rule\n\nPermissions - cloudwatch:DeleteInsightRules",
+        "link": "https://cloudcustodian.io/docs/aws/resources/insight-rule.html#aws-insight-rule-actions-delete"
+      },
+      "disable": {
+        "doc": "Disable a cloudwatch contributor insight rule.\n\nPermissions - cloudwatch:DisableInsightRules",
+        "link": "https://cloudcustodian.io/docs/aws/resources/insight-rule.html#aws-insight-rule-actions-disable"
       }
     },
     "filters": {}
@@ -1589,7 +1977,12 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/kafka.html#aws-kafka-actions-set-monitoring"
       }
     },
-    "filters": {}
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a kafka cluster\u00e2\u0080\u0099s data-volume encryption by its associcated kms key\nand optionally the aliasname of the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/kafka.html#aws-kafka-filters-kms-key"
+      }
+    }
   },
   "aws.key-pair": {
     "actions": {
@@ -1631,6 +2024,29 @@
       }
     },
     "filters": {}
+  },
+  "aws.kinesis-analyticsv2": {
+    "actions": {
+      "delete": {
+        "doc": "Parent base class for filters and actions.\nPermissions - kinesisanalytics:DeleteApplication",
+        "link": "https://cloudcustodian.io/docs/aws/resources/kinesis-analyticsv2.html#aws-kinesis-analyticsv2-actions-delete"
+      }
+    },
+    "filters": {}
+  },
+  "aws.kinesis-video": {
+    "actions": {
+      "delete": {
+        "doc": "Delete a Kinesis Video stream\n\nPermissions - kinesisvideo:DeleteStream",
+        "link": "https://cloudcustodian.io/docs/aws/resources/kinesis-video.html#aws-kinesis-video-actions-delete"
+      }
+    },
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/kinesis-video.html#aws-kinesis-video-filters-kms-key"
+      }
+    }
   },
   "aws.kms": {
     "actions": {
@@ -1685,6 +2101,14 @@
       "set-concurrency": {
         "doc": "Set lambda function concurrency to the desired level.\nCan be used to set the reserved function concurrency to an exact value,\nto delete reserved concurrency, or to set the value to an attribute of\nthe resource.\nPermissions - lambda:DeleteFunctionConcurrency, lambda:PutFunctionConcurrency",
         "link": "https://cloudcustodian.io/docs/aws/resources/lambda.html#aws-lambda-actions-set-concurrency"
+      },
+      "set-xray-tracing": {
+        "doc": "This action allows for enable Xray tracing to Active\n\nPermissions - lambda:UpdateFunctionConfiguration",
+        "link": "https://cloudcustodian.io/docs/aws/resources/lambda.html#aws-lambda-actions-set-xray-tracing"
+      },
+      "trim-versions": {
+        "doc": "Delete old versions of a function.\nBy default this will only remove the non $LATEST\nversion of a function that are not referenced by\nan alias. Optionally it can delete only versions\nolder than a given age.\nretain-latest refers to whether the latest numeric\nversion will be retained, the $LATEST alias will\nstill point to the last revision even without this set,\nso this is safe wrt to the function availability, its more\nabout desire to retain an explicit version of the current\ncode, rather than just the $LATEST alias pointer which will\nbe automatically updated.\nPermissions - lambda:ListAliases, lambda:ListVersionsByFunction, lambda:DeleteFunction",
+        "link": "https://cloudcustodian.io/docs/aws/resources/lambda.html#aws-lambda-actions-trim-versions"
       }
     },
     "filters": {
@@ -1764,6 +2188,10 @@
         "doc": "\nPermissions - logs:DeleteLogGroup",
         "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-actions-delete"
       },
+      "put-subscription-filter": {
+        "doc": "Create/Update a subscription filter and associate with a log group\n\nPermissions - logs:PutSubscriptionFilter",
+        "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-actions-put-subscription-filter"
+      },
       "retention": {
         "doc": "Action to set the retention period (in days) for CloudWatch log groups\n\nPermissions - logs:PutRetentionPolicy",
         "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-actions-retention"
@@ -1778,11 +2206,19 @@
         "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - logs:DescribeSubscriptionFilters",
         "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-filters-cross-account"
       },
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-filters-kms-key"
+      },
       "last-write": {
         "doc": "Filters CloudWatch log groups by last write\n\nPermissions - logs:DescribeLogStreams",
         "link": "https://cloudcustodian.io/docs/aws/resources/log-group.html#aws-log-group-filters-last-write"
       }
     }
+  },
+  "aws.log-metric": {
+    "actions": {},
+    "filters": {}
   },
   "aws.message-broker": {
     "actions": {
@@ -1791,6 +2227,28 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/message-broker.html#aws-message-broker-actions-delete"
       }
     },
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/message-broker.html#aws-message-broker-filters-kms-key"
+      }
+    }
+  },
+  "aws.message-config": {
+    "actions": {},
+    "filters": {}
+  },
+  "aws.mirror-session": {
+    "actions": {
+      "delete": {
+        "doc": "Action to delete traffic mirror session(s)\n\nPermissions - ec2:DeleteTrafficMirrorSession",
+        "link": "https://cloudcustodian.io/docs/aws/resources/mirror-session.html#aws-mirror-session-actions-delete"
+      }
+    },
+    "filters": {}
+  },
+  "aws.mirror-target": {
+    "actions": {},
     "filters": {}
   },
   "aws.ml-model": {
@@ -1864,6 +2322,15 @@
       }
     }
   },
+  "aws.prefix-list": {
+    "actions": {},
+    "filters": {
+      "entry": {
+        "doc": "Parent base class for filters and actions.\nPermissions - ec2:GetManagedPrefixListEntries",
+        "link": "https://cloudcustodian.io/docs/aws/resources/prefix-list.html#aws-prefix-list-filters-entry"
+      }
+    }
+  },
   "aws.qldb": {
     "actions": {
       "delete": {
@@ -1925,6 +2392,10 @@
       }
     },
     "filters": {
+      "consecutive-snapshots": {
+        "doc": "Returns instances where number of consective daily snapshots is\nequal to/or greater than n days.\n\nPermissions - rds:DescribeDBSnapshots, rds:DescribeDBInstances",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rds.html#aws-rds-filters-consecutive-snapshots"
+      },
       "db-parameter": {
         "doc": "Applies value type filter on set db parameter values.\n:example:\nPermissions - rds:DescribeDBInstances, rds:DescribeDBParameters",
         "link": "https://cloudcustodian.io/docs/aws/resources/rds.html#aws-rds-filters-db-parameter"
@@ -1970,7 +2441,16 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/rds-cluster.html#aws-rds-cluster-actions-stop"
       }
     },
-    "filters": {}
+    "filters": {
+      "consecutive-snapshots": {
+        "doc": "than n days.\n\nPermissions - rds:DescribeDBClusterSnapshots, rds:DescribeDBClusters",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rds-cluster.html#aws-rds-cluster-filters-consecutive-snapshots"
+      },
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rds-cluster.html#aws-rds-cluster-filters-kms-key"
+      }
+    }
   },
   "aws.rds-cluster-param-group": {
     "actions": {
@@ -1994,6 +2474,10 @@
       "delete": {
         "doc": "Action to delete rds cluster snapshots\nTo prevent unwanted deletion of rds cluster snapshots, it is recommended\nto apply a filter to the rule\n\nPermissions - rds:DeleteDBClusterSnapshot",
         "link": "https://cloudcustodian.io/docs/aws/resources/rds-cluster-snapshot.html#aws-rds-cluster-snapshot-actions-delete"
+      },
+      "set-permissions": {
+        "doc": "Set permissions for copying or restoring an RDS cluster snapshot\nUse the \u00e2\u0080\u0098add\u00e2\u0080\u0099 and \u00e2\u0080\u0098remove\u00e2\u0080\u0099 parameters to control which accounts to\nadd or remove, respectively.  The default is to remove any\npermissions granted to other AWS accounts.\n\n\nPermissions - rds:ModifyDBClusterSnapshotAttribute",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rds-cluster-snapshot.html#aws-rds-cluster-snapshot-actions-set-permissions"
       }
     },
     "filters": {
@@ -2024,6 +2508,10 @@
     },
     "filters": {}
   },
+  "aws.rds-proxy": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.rds-reserved": {
     "actions": {},
     "filters": {}
@@ -2041,6 +2529,10 @@
       "restore": {
         "doc": "Restore an rds instance from a snapshot.\n\n\nPermissions - rds:ModifyDBInstance, rds:ModifyDBParameterGroup, rds:ModifyOptionGroup, rds:RebootDBInstance, rds:RestoreDBInstanceFromDBSnapshot",
         "link": "https://cloudcustodian.io/docs/aws/resources/rds-snapshot.html#aws-rds-snapshot-actions-restore"
+      },
+      "set-permissions": {
+        "doc": "Set permissions for copying or restoring an RDS snapshot\nUse the \u00e2\u0080\u0098add\u00e2\u0080\u0099 and \u00e2\u0080\u0098remove\u00e2\u0080\u0099 parameters to control which accounts to\nadd or remove, respectively.  The default is to remove any\npermissions granted to other AWS accounts.\n\n\nPermissions - rds:ModifyDBSnapshotAttribute",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rds-snapshot.html#aws-rds-snapshot-actions-set-permissions"
       }
     },
     "filters": {
@@ -2192,6 +2684,10 @@
       }
     }
   },
+  "aws.rest-client-certificate": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.rest-resource": {
     "actions": {
       "delete-integration": {
@@ -2224,12 +2720,33 @@
         "doc": "Delete an api stage\n\nPermissions - apigateway:DELETE",
         "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-actions-delete"
       },
+      "set-waf": {
+        "doc": "Enable waf protection on API Gateway stage.\n\nPermissions - waf-regional:AssociateWebACL, waf-regional:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-actions-set-waf"
+      },
+      "set-wafv2": {
+        "doc": "Enable wafv2 protection on API Gateway stage.\n\nPermissions - wafv2:AssociateWebACL, wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-actions-set-wafv2"
+      },
       "update": {
         "doc": "Update/remove values of an api stage\n\nPermissions - apigateway:PATCH",
         "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-actions-update"
       }
     },
-    "filters": {}
+    "filters": {
+      "client-certificate": {
+        "doc": "Filter API stages by a client certificate\n\nPermissions - apigateway:GET",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-filters-client-certificate"
+      },
+      "waf-enabled": {
+        "doc": "Filter API Gateway stage by waf-regional web-acl\n\nPermissions - waf:ListWebACLs, waf:GetWebACL",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-filters-waf-enabled"
+      },
+      "wafv2-enabled": {
+        "doc": "Filter API Gateway stage by wafv2 web-acl\n\nPermissions - wafv2:ListWebACLs",
+        "link": "https://cloudcustodian.io/docs/aws/resources/rest-stage.html#aws-rest-stage-filters-wafv2-enabled"
+      }
+    }
   },
   "aws.rest-vpclink": {
     "actions": {},
@@ -2238,6 +2755,10 @@
   "aws.route-table": {
     "actions": {},
     "filters": {
+      "cross-az-nat-gateway-route": {
+        "doc": "Filter route-tables to find those with routes which send traffic\nfrom a subnet in an az to a nat gateway in a different az.\nThis filter is useful for cost optimization, resiliency, and\nperformance use-cases, where we don\u00e2\u0080\u0099t want network traffic to\ncross from one availability zone (AZ) to another AZ.\n\nPermissions - ec2:DescribeRouteTables, ec2:DescribeNatGateways, ec2:DescribeSubnets",
+        "link": "https://cloudcustodian.io/docs/aws/resources/route-table.html#aws-route-table-filters-cross-az-nat-gateway-route"
+      },
       "route": {
         "doc": "Filter a route table by its routes\u00e2\u0080\u0099 attributes.",
         "link": "https://cloudcustodian.io/docs/aws/resources/route-table.html#aws-route-table-filters-route"
@@ -2366,6 +2887,24 @@
       }
     }
   },
+  "aws.s3-access-point": {
+    "actions": {
+      "delete": {
+        "doc": "Parent base class for filters and actions.\nPermissions - s3:DeleteAccessPoint",
+        "link": "https://cloudcustodian.io/docs/aws/resources/s3-access-point.html#aws-s3-access-point-actions-delete"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - s3:GetAccessPointPolicy",
+        "link": "https://cloudcustodian.io/docs/aws/resources/s3-access-point.html#aws-s3-access-point-filters-cross-account"
+      }
+    }
+  },
+  "aws.s3-access-point-multi": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.sagemaker-endpoint": {
     "actions": {
       "delete": {
@@ -2438,12 +2977,20 @@
     },
     "filters": {}
   },
+  "aws.scaling-policy": {
+    "actions": {},
+    "filters": {}
+  },
   "aws.secrets-manager": {
     "actions": {},
     "filters": {
       "cross-account": {
         "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - secretsmanager:GetResourcePolicy",
         "link": "https://cloudcustodian.io/docs/aws/resources/secrets-manager.html#aws-secrets-manager-filters-cross-account"
+      },
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/secrets-manager.html#aws-secrets-manager-filters-kms-key"
       }
     }
   },
@@ -2492,7 +3039,7 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/security-group.html#aws-security-group-filters-unused"
       },
       "used": {
-        "doc": "Filter to security groups that are used.\nThis operates as a complement to the unused filter for multi-step\nworkflows.\n:example:\n.. code-block:: yaml\nname: security-groups-in-use\nresource: security-group\nfilters:\nused\nname: security-groups-used-by-rds\nresource: security-group\nfilters:\nused\ntype: value\nkey: c7n:InstanceOwnerIds\nop: intersect\nvalue:\namazon-rds\nname: security-groups-used-by-natgw\nresource: security-group\nfilters:\nused\ntype: value\nkey: c7n:InterfaceTypes\nop: intersect\nvalue:\nnat_gateway\nPermissions - lambda:ListFunctions, ec2:DescribeNetworkInterfaces, autoscaling:DescribeLaunchConfigurations, ec2:DescribeSecurityGroups, events:ListTargetsByRule",
+        "doc": "Filter to security groups that are used.\nThis operates as a complement to the unused filter for multi-step\nworkflows.\n:example:\n.. code-block:: yaml\nname: security-groups-in-use\nresource: security-group\nfilters:\nused\nname: security-groups-used-by-rds\nresource: security-group\nfilters:\nused\ntype: value\nkey: c7n:InstanceOwnerIds\nop: intersect\nvalue:\namazon-rds\nname: security-groups-used-by-natgw\nresource: security-group\nfilters:\nused\ntype: value\nkey: c7n:InterfaceTypes\nop: intersect\nvalue:\nnat_gateway\nname: security-groups-used-by-alb\nresource: security-group\nfilters:\nused\ntype: value\nkey: c7n:InterfaceResourceTypes\nop: intersect\nvalue:\nelb-app\nPermissions - lambda:ListFunctions, ec2:DescribeNetworkInterfaces, autoscaling:DescribeLaunchConfigurations, ec2:DescribeSecurityGroups, events:ListTargetsByRule",
         "link": "https://cloudcustodian.io/docs/aws/resources/security-group.html#aws-security-group-filters-used"
       }
     }
@@ -2510,6 +3057,24 @@
         "link": "https://cloudcustodian.io/docs/aws/resources/serverless-app.html#aws-serverless-app-filters-cross-account"
       }
     }
+  },
+  "aws.service-quota": {
+    "actions": {
+      "request-increase": {
+        "doc": "Request a limit increase for a service quota\nPermissions - servicequotas:RequestServiceQuotaIncrease",
+        "link": "https://cloudcustodian.io/docs/aws/resources/service-quota.html#aws-service-quota-actions-request-increase"
+      }
+    },
+    "filters": {
+      "request-history": {
+        "doc": "Filter on historical requests for service quota increases\nPermissions - servicequotas:ListRequestedServiceQuotaChangeHistory",
+        "link": "https://cloudcustodian.io/docs/aws/resources/service-quota.html#aws-service-quota-filters-request-history"
+      }
+    }
+  },
+  "aws.service-quota-request": {
+    "actions": {},
+    "filters": {}
   },
   "aws.shield-attack": {
     "actions": {},
@@ -2556,6 +3121,10 @@
         "doc": "Filter to return all SNS topics with cross account access permissions\nThe whitelist parameter will omit the accounts that match from the return\nPermissions - sns:GetTopicAttributes",
         "link": "https://cloudcustodian.io/docs/aws/resources/sns.html#aws-sns-filters-cross-account"
       },
+      "has-statement": {
+        "doc": "Find resources with matching access policy statements.\n:example:\n.. code-block:: yaml\nname: sns-check-statement-id\nresource: sns\nfilters:\ntype: has-statement\nstatement_ids:\nBlockNonSSL\nname: sns-check-block-non-ssl\nresource: sns\nfilters:\ntype: has-statement\nstatements:\nEffect: Deny\nAction: \u00e2\u0080\u0098SNS:Publish\u00e2\u0080\u0099\nPrincipal: \u00e2\u0080\u0098*\u00e2\u0080\u0099\nCondition:\n\u00e2\u0080\u009caws:SecureTransport\u00e2\u0080\u009d: \u00e2\u0080\u009cfalse\u00e2\u0080\u009d",
+        "link": "https://cloudcustodian.io/docs/aws/resources/sns.html#aws-sns-filters-has-statement"
+      },
       "kms-key": {
         "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
         "link": "https://cloudcustodian.io/docs/aws/resources/sns.html#aws-sns-filters-kms-key"
@@ -2595,6 +3164,14 @@
         "doc": "Filter SQS queues which have cross account permissions\n\nPermissions - sqs:GetQueueAttributes",
         "link": "https://cloudcustodian.io/docs/aws/resources/sqs.html#aws-sqs-filters-cross-account"
       },
+      "dead-letter": {
+        "doc": "Filter for sqs queues that are dead letter queues\n",
+        "link": "https://cloudcustodian.io/docs/aws/resources/sqs.html#aws-sqs-filters-dead-letter"
+      },
+      "has-statement": {
+        "doc": "Find resources with matching access policy statements.\n:example:\n.. code-block:: yaml\nname: sns-check-statement-id\nresource: sns\nfilters:\ntype: has-statement\nstatement_ids:\nBlockNonSSL\nname: sns-check-block-non-ssl\nresource: sns\nfilters:\ntype: has-statement\nstatements:\nEffect: Deny\nAction: \u00e2\u0080\u0098SNS:Publish\u00e2\u0080\u0099\nPrincipal: \u00e2\u0080\u0098*\u00e2\u0080\u0099\nCondition:\n\u00e2\u0080\u009caws:SecureTransport\u00e2\u0080\u009d: \u00e2\u0080\u009cfalse\u00e2\u0080\u009d",
+        "link": "https://cloudcustodian.io/docs/aws/resources/sqs.html#aws-sqs-filters-has-statement"
+      },
       "kms-key": {
         "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
         "link": "https://cloudcustodian.io/docs/aws/resources/sqs.html#aws-sqs-filters-kms-key"
@@ -2609,6 +3186,38 @@
       }
     },
     "filters": {}
+  },
+  "aws.ssm-data-sync": {
+    "actions": {
+      "delete": {
+        "doc": "Delete SSM data sync resources.\n\nPermissions - ssm:DeleteResourceDataSync",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ssm-data-sync.html#aws-ssm-data-sync-actions-delete"
+      }
+    },
+    "filters": {
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ssm-data-sync.html#aws-ssm-data-sync-filters-kms-key"
+      }
+    }
+  },
+  "aws.ssm-document": {
+    "actions": {
+      "delete": {
+        "doc": "Delete SSM documents. Set force flag to True to force delete on documents that are\nshared across accounts. This will remove those shared accounts, and then delete the document.\nOtherwise, delete will fail and raise InvalidDocumentOperation exception\nif a document is shared with other accounts. Default value for force is False.\n\nPermissions - ssm:DeleteDocument, ssm:ModifyDocumentPermission",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ssm-document.html#aws-ssm-document-actions-delete"
+      },
+      "set-sharing": {
+        "doc": "Edit list of accounts that share permissions on an SSM document. Pass in a list of account\nIDs to the \u00e2\u0080\u0098add\u00e2\u0080\u0099 or \u00e2\u0080\u0098remove\u00e2\u0080\u0099 fields to edit document sharing permissions.\nSet \u00e2\u0080\u0098remove\u00e2\u0080\u0099 to \u00e2\u0080\u0098matched\u00e2\u0080\u0099 to automatically remove any external accounts on a\ndocument (use in conjunction with the cross-account filter).\n\nPermissions - ssm:ModifyDocumentPermission",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ssm-document.html#aws-ssm-document-actions-set-sharing"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Filter SSM documents which have cross account permissions\n\nPermissions - ssm:DescribeDocumentPermission",
+        "link": "https://cloudcustodian.io/docs/aws/resources/ssm-document.html#aws-ssm-document-filters-cross-account"
+      }
+    }
   },
   "aws.ssm-managed-instance": {
     "actions": {
@@ -2664,6 +3273,10 @@
   },
   "aws.subnet": {
     "actions": {
+      "modify": {
+        "doc": "Modify subnet attributes.\n\nPermissions - ec2:ModifySubnetAttribute",
+        "link": "https://cloudcustodian.io/docs/aws/resources/subnet.html#aws-subnet-actions-modify"
+      },
       "set-flow-log": {
         "doc": "Create flow logs for a network resource\n\nPermissions - ec2:CreateFlowLogs, logs:CreateLogGroup",
         "link": "https://cloudcustodian.io/docs/aws/resources/subnet.html#aws-subnet-actions-set-flow-log"
@@ -2673,10 +3286,18 @@
       "flow-logs": {
         "doc": "Are flow logs enabled on the resource.\nie to find all vpcs with flows logs disabled we can do this\n\nor to find all vpcs with flow logs but that don\u00e2\u0080\u0099t match a\nparticular configuration.\n\nPermissions - ec2:DescribeFlowLogs",
         "link": "https://cloudcustodian.io/docs/aws/resources/subnet.html#aws-subnet-filters-flow-logs"
+      },
+      "vpc-endpoint": {
+        "doc": "Filters subnets based on their vpc-endpoints\n\nPermissions - ec2:DescribeVpcEndpoints",
+        "link": "https://cloudcustodian.io/docs/aws/resources/subnet.html#aws-subnet-filters-vpc-endpoint"
       }
     }
   },
   "aws.support-case": {
+    "actions": {},
+    "filters": {}
+  },
+  "aws.swf-domain": {
     "actions": {},
     "filters": {}
   },
@@ -2732,6 +3353,10 @@
       "vpc-attributes": {
         "doc": "Filters VPCs based on their DNS attributes\n\nPermissions - ec2:DescribeVpcAttribute",
         "link": "https://cloudcustodian.io/docs/aws/resources/vpc.html#aws-vpc-filters-vpc-attributes"
+      },
+      "vpc-endpoint": {
+        "doc": "Filters vpcs based on their vpc-endpoints\n\nPermissions - ec2:DescribeVpcEndpoints",
+        "link": "https://cloudcustodian.io/docs/aws/resources/vpc.html#aws-vpc-filters-vpc-endpoint"
       }
     }
   },
@@ -2760,12 +3385,52 @@
     "actions": {},
     "filters": {}
   },
-  "aws.workspaces": {
+  "aws.wafv2": {
     "actions": {},
+    "filters": {}
+  },
+  "aws.workspaces": {
+    "actions": {
+      "terminate": {
+        "doc": "Terminates a Workspace\n\nPermissions - workspaces:TerminateWorkspaces",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces.html#aws-workspaces-actions-terminate"
+      }
+    },
     "filters": {
       "connection-status": {
         "doc": "Filter Workspaces based on user connection information\n\nPermissions - workspaces:DescribeWorkspacesConnectionStatus",
         "link": "https://cloudcustodian.io/docs/aws/resources/workspaces.html#aws-workspaces-filters-connection-status"
+      },
+      "kms-key": {
+        "doc": "Filter a resource by its associated kms key and optionally the aliasname\nof the kms key by using \u00e2\u0080\u0098c7n:AliasName\u00e2\u0080\u0099\n\nMatch a specific key alias:\n\nPermissions - kms:ListKeys, kms:DescribeKey",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces.html#aws-workspaces-filters-kms-key"
+      }
+    }
+  },
+  "aws.workspaces-directory": {
+    "actions": {
+      "deregister": {
+        "doc": "Deregisters a workspace\n\nPermissions - workspaces:DeregisterWorkspaceDirectory",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces-directory.html#aws-workspaces-directory-actions-deregister"
+      },
+      "modify-client-properties": {
+        "doc": "Action to enable/disable credential caching for Workspaces client.\n\nPermissions - workspaces:ModifyClientProperties",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces-directory.html#aws-workspaces-directory-actions-modify-client-properties"
+      }
+    },
+    "filters": {}
+  },
+  "aws.workspaces-image": {
+    "actions": {
+      "delete": {
+        "doc": "Deletes a Workspace Image\n\nPermissions - workspaces:DeleteWorkspaceImage",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces-image.html#aws-workspaces-image-actions-delete"
+      }
+    },
+    "filters": {
+      "cross-account": {
+        "doc": "Check a resource\u00e2\u0080\u0099s embedded iam policy for cross account access.\nPermissions - workspaces:DescribeWorkspaceImagePermissions",
+        "link": "https://cloudcustodian.io/docs/aws/resources/workspaces-image.html#aws-workspaces-image-filters-cross-account"
       }
     }
   },
@@ -2803,7 +3468,7 @@
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-actions.html#aws-common-actions-auto-tag-user"
     },
     "aws.copy-related-tag": {
-      "doc": "Copy a related resource tag to its associated resource\n\nThen, specify the key on the resource that references the related resource.\nIn the case of ebs-snapshot, the VolumeId attribute would be the key that\nidentifies the related resource, ebs.\nFinally, specify a list of tag keys to copy from the related resource onto\nthe original resource. The special character \u00e2\u0080\u009c*\u00e2\u0080\u009d can be used to signify that\nall tags from the related resource should be copied to the original resource.\n\n",
+      "doc": "Copy a related resource tag to its associated resource\n\nThen, specify the key on the resource that references the related resource.\nIn the case of ebs-snapshot, the VolumeId attribute would be the key that\nidentifies the related resource, ebs.\nFinally, specify a list of tag keys to copy from the related resource onto\nthe original resource. The special character \u00e2\u0080\u009c*\u00e2\u0080\u009d can be used to signify that\nall tags from the related resource should be copied to the original resource.\n\n\nIn the event that the resource type is not supported in Cloud Custodian but\nis supported in the resources groups tagging api, use the resourcegroupstaggingapi\nresource type to reference the resource. The value should be an ARN for the\nrelated resource.\n",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-actions.html#aws-common-actions-copy-related-tag"
     },
     "aws.mark-for-op": {
@@ -2834,6 +3499,10 @@
       "doc": "Modify security groups on a Redshift cluster",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-actions.html#aws-common-actions-modify-security-groups"
     },
+    "aws.modify-ecr-policy": {
+      "doc": "Action to modify ECR policy statements.\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-actions.html#aws-common-actions-modify-ecr-policy"
+    },
     "aws.modify-policy": {
       "doc": "Action to modify SQS Queue IAM policy statements.\n",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-actions.html#aws-common-actions-modify-policy"
@@ -2852,6 +3521,10 @@
       "doc": "Generic reduce filter to group, sort, and limit your resources.\nThis example will select the longest running instance from each ASG,\nthen randomly choose 10% of those, maxing at 15 total instances.\n\nOr you might want to randomly select a 10 percent of your resources,\nbut no more than 15.\n",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-reduce"
     },
+    "aws.config-compliance": {
+      "doc": "Filter resources by their compliance with one or more AWS config rules.\nAn example of using the filter to find all ec2 instances that have\nbeen registered as non compliant in the last 30 days against two\ncustom AWS Config rules.\n\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-config-compliance"
+    },
     "aws.finding": {
       "doc": "Check if there are Security Hub Findings related to the resources",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-finding"
@@ -2863,10 +3536,6 @@
     "aws.reduce": {
       "doc": "Generic reduce filter to group, sort, and limit your resources.\nThis example will select the longest running instance from each ASG,\nthen randomly choose 10% of those, maxing at 15 total instances.\n\nOr you might want to randomly select a 10 percent of your resources,\nbut no more than 15.\n",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-reduce"
-    },
-    "aws.config-compliance": {
-      "doc": "Filter resources by their compliance with one or more AWS config rules.\nAn example of using the filter to find all ec2 instances that have\nbeen registered as non compliant in the last 30 days against two\ncustom AWS Config rules.\n\n",
-      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-config-compliance"
     },
     "aws.health-event": {
       "doc": "Check if there are operations health events (phd) related to the resources\nhttps://aws.amazon.com/premiumsupport/technology/personal-health-dashboard/\nHealth events are stored as annotation on a resource.\nCustodian also supports responding to phd events via a lambda execution mode.",
@@ -2912,6 +3581,14 @@
       "doc": "",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-onhour"
     },
+    "aws.domain-options": {
+      "doc": "Filter for cloud search domains by their domain options.\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-domain-options"
+    },
+    "aws.instance-attribute": {
+      "doc": "Filter Connect resources based on instance attributes\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-instance-attribute"
+    },
     "aws.shield-metrics": {
       "doc": "Specialized metrics filter for shield",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-shield-metrics"
@@ -2928,9 +3605,41 @@
       "doc": "Analyze resource access policies using AWS IAM Access Analyzer.\nAccess analyzer uses logic based reasoning to analyze embedded resource\niam access policies to determine access outside of a zone of trust.",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-iam-analyzer"
     },
+    "aws.login-profile": {
+      "doc": "Filter IAM users that have an associated login-profile\nFor quicker evaluation and reduced API traffic, it is recommended to\ninstead use the \u00e2\u0080\u0098credential\u00e2\u0080\u0099 filter with \u00e2\u0080\u0098password_enabled\u00e2\u0080\u0099: true when\na delay of up to four hours for credential report syncing is acceptable.\n\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-login-profile"
+    },
+    "aws.subscription-filter": {
+      "doc": "Filters CloudWatch log groups by subscriptions\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-subscription-filter"
+    },
+    "aws.alarm": {
+      "doc": "Filter log metric filters based on associated alarms.\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-alarm"
+    },
+    "aws.engine": {
+      "doc": "Filter a rds resource based on its Engine Metadata\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-engine"
+    },
     "aws.logging": {
       "doc": "Checks Redshift logging status and attributes.\n",
       "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-logging"
+    },
+    "aws.ownership": {
+      "doc": "Filter for object ownership controls\n\n:example\nFind buckets with ACLs disabled\n:example\nFind buckets with object ownership preferred or enforced\n:example\nFind buckets with no object ownership controls",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-ownership"
+    },
+    "aws.usage-metric": {
+      "doc": "Filter service quotas by usage, only compatible with service quotas\nthat return a UsageMetric attribute.\nDefault limit is 80%",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-usage-metric"
+    },
+    "aws.client-properties": {
+      "doc": "Filter workspace directories based off workspace client properties.\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-client-properties"
+    },
+    "aws.connection-aliases": {
+      "doc": "Filter workspace directories based on connection aliases\n",
+      "link": "https://cloudcustodian.io/docs/aws/resources/aws-common-filters.html#aws-common-filters-connection-aliases"
     }
   }
 }
