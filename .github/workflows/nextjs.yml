@@ -34,11 +34,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Update Custodian docs
-        run: |
-          pip install -r requirements.txt
-          python get_c7n_docs.py
-        working-directory: ./scripts
       - name: Update Custodian schema
         run: |
           python -m venv custodian
@@ -46,6 +41,11 @@ jobs:
           pip install c7n
 
           custodian schema --json > public/c7n-schema.json
+      - name: Update Custodian docs
+        run: |
+          pip install -r requirements.txt
+          python get_c7n_docs.py
+        working-directory: ./scripts
       - name: Detect package manager
         id: detect-package-manager
         run: |
