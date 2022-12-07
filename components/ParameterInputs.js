@@ -232,11 +232,11 @@ export function ParameterInput(props) {
       console.log('unknown input:', resolvedConfig);
       setInputElement(<Typography>unknown</Typography>);
     }
-  }, [name, resolvedConfig, isRequired, value, setValue, setInputElement]);
+  }, [resolvedConfig, value, setValue, setInputElement]);
 
   React.useEffect(() => {
     setProperty(value);
-  }, [value, setProperty]);
+  }, [value]);
 
   return inputElement;
 }
@@ -291,7 +291,7 @@ export function NumberInput(props) {
         setValue(Number(inputValue));
       }
     }
-  }, [inputValue, multiline, numberValid, setValue]);
+  }, [inputValue, numberValid]);
 
   return (
     <TextField
@@ -350,7 +350,7 @@ export function StringInput(props) {
     } else {
       setValue(null);
     }
-  }, [inputValue, setValue, stringValid]);
+  }, [inputValue, stringValid]);
 
   return (
     choices ? (

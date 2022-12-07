@@ -173,7 +173,7 @@ export function NewService(props) {
 
   React.useEffect(() => {
     setSelectedService(service);
-  }, [service, setSelectedService]);
+  }, [service]);
 
   return (
     <React.Fragment>
@@ -271,7 +271,7 @@ export function NewActionOrFilter(props) {
 
   React.useEffect(() => {
     setSelectedActionOrFilter(actionOrFilter);
-  }, [actionOrFilter, setSelectedActionOrFilter]);
+  }, [actionOrFilter]);
 
   const setProperty = (property, value) => {
     setActionOrFilter((previous) => {
