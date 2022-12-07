@@ -27,6 +27,16 @@ function Copyright(props) {
       >
         GitHub
       </Link>
+      &ensp;&bull;&ensp;
+      <Link
+        color="inherit"
+        underline="hover"
+        href="https://github.com/sponsors/areifert"
+        target="_blank"
+        rel="noopener"
+      >
+        Buy me a ☕
+      </Link>
     </Typography>
   );
 }
